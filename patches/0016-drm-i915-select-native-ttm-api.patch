@@ -1,0 +1,18 @@
+Subject: drm/i915: support the native TTM allocation flags API
+
+Use the interface selected by configure when building against native TTM.
+
+--- a/drivers/gpu/drm/i915/intel_region_ttm.c
++++ b/drivers/gpu/drm/i915/intel_region_ttm.c
+@@ -34,7 +34,11 @@ int intel_region_ttm_device_init(struct drm_i915_private *dev_priv)
+ 
+ 	return ttm_device_init(&dev_priv->bdev, i915_ttm_driver(),
+ 			       drm->dev, drm->anon_inode->i_mapping,
++#ifdef BPM_TTM_DEVICE_INIT_ALLOC_FLAGS_PRESENT
++			       drm->vma_offset_manager, 0);
++#else
+ 			       drm->vma_offset_manager, false, false);
++#endif
+ }
+ 
+ /**

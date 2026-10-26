@@ -1,0 +1,16 @@
+Subject: drm/i915: include buddy types before forward declarations
+
+The target kernel may expose the allocator under the DRM buddy names.
+Include the compatibility header before declaring the resource pointer
+so every translation unit uses the target kernel type consistently.
+
+--- a/drivers/gpu/drm/i915/i915_ttm_buddy_manager.h
++++ b/drivers/gpu/drm/i915/i915_ttm_buddy_manager.h
+@@ -6,6 +6,7 @@
+ #ifndef __I915_TTM_BUDDY_MANAGER_H__
+ #define __I915_TTM_BUDDY_MANAGER_H__
+ 
++#include <linux/gpu_buddy.h>
+ #include <linux/list.h>
+ #include <linux/types.h>
+ 

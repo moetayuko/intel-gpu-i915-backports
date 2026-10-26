@@ -1,0 +1,149 @@
+Subject: drm/i915: adapt Intel LTS to the external DRM backport
+
+Import source: intel/linux-intel-lts 6.18/linux
+Commit: 6f60c9f6344f04a699abb69dd35bc294f6c306d8
+
+Handle target vma_flags_t and include DRM logging declarations explicitly.
+Use the target kernel public DRM UAPI while retaining the Intel LTS
+i915 UAPI extensions.
+
+---
+diff --git a/drivers/gpu/drm/i915/display/intel_display_debugfs.c b/drivers/gpu/drm/i915/display/intel_display_debugfs.c
+--- a/drivers/gpu/drm/i915/display/intel_display_debugfs.c
++++ b/drivers/gpu/drm/i915/display/intel_display_debugfs.c
+@@ -3,6 +3,7 @@
+  * Copyright © 2020 Intel Corporation
+  */
+ 
++#include <drm/drm_print.h>
+ #include <linux/debugfs.h>
+ #include <linux/string_choices.h>
+ #include <linux/string_helpers.h>
+diff --git a/drivers/gpu/drm/i915/display/intel_frontbuffer.c b/drivers/gpu/drm/i915/display/intel_frontbuffer.c
+--- a/drivers/gpu/drm/i915/display/intel_frontbuffer.c
++++ b/drivers/gpu/drm/i915/display/intel_frontbuffer.c
+@@ -55,6 +55,7 @@
+  * cancelled as soon as busyness is detected.
+  */
+ 
++#include <drm/drm_print.h>
+ #include <drm/drm_gem.h>
+ 
+ #include "i915_active.h"
+diff --git a/drivers/gpu/drm/i915/display/intel_plane.c b/drivers/gpu/drm/i915/display/intel_plane.c
+--- a/drivers/gpu/drm/i915/display/intel_plane.c
++++ b/drivers/gpu/drm/i915/display/intel_plane.c
+@@ -31,6 +31,7 @@
+  * prepare/check/commit/cleanup steps.
+  */
+ 
++#include <drm/drm_print.h>
+ #include <linux/dma-fence-chain.h>
+ #include <linux/dma-resv.h>
+ #include <linux/iosys-map.h>
+diff --git a/drivers/gpu/drm/i915/display/intel_psr.c b/drivers/gpu/drm/i915/display/intel_psr.c
+--- a/drivers/gpu/drm/i915/display/intel_psr.c
++++ b/drivers/gpu/drm/i915/display/intel_psr.c
+@@ -21,6 +21,7 @@
+  * DEALINGS IN THE SOFTWARE.
+  */
+ 
++#include <drm/drm_print.h>
+ #include <linux/debugfs.h>
+ 
+ #include <drm/drm_atomic_helper.h>
+diff --git a/drivers/gpu/drm/i915/gem/i915_gem_shmem.c b/drivers/gpu/drm/i915/gem/i915_gem_shmem.c
+--- a/drivers/gpu/drm/i915/gem/i915_gem_shmem.c
++++ b/drivers/gpu/drm/i915/gem/i915_gem_shmem.c
+@@ -493,7 +493,11 @@
+ 			  struct drm_gem_object *obj,
+ 			  resource_size_t size)
+ {
++#ifdef BPM_VMA_FLAGS_T_NOT_PRESENT
+ 	unsigned long flags = VM_NORESERVE;
++#else
++	vma_flags_t flags = mk_vma_flags(VMA_NORESERVE_BIT);
++#endif
+ 	struct file *filp;
+ 
+ 	drm_gem_private_object_init(&i915->drm, obj, size);
+diff --git a/drivers/gpu/drm/i915/gem/i915_gem_ttm.c b/drivers/gpu/drm/i915/gem/i915_gem_ttm.c
+--- a/drivers/gpu/drm/i915/gem/i915_gem_ttm.c
++++ b/drivers/gpu/drm/i915/gem/i915_gem_ttm.c
+@@ -189,6 +189,11 @@
+ 	const unsigned int max_segment = i915_sg_segment_size(i915->drm.dev);
+ 	const size_t size = (size_t)ttm->num_pages << PAGE_SHIFT;
+ 	struct file *filp = i915_tt->filp;
++#ifdef BPM_VMA_FLAGS_T_NOT_PRESENT
++	unsigned long shmem_flags = VM_NORESERVE;
++#else
++	vma_flags_t shmem_flags = mk_vma_flags(VMA_NORESERVE_BIT);
++#endif
+ 	struct sgt_iter sgt_iter;
+ 	struct sg_table *st;
+ 	struct page *page;
+@@ -199,7 +204,7 @@
+ 		struct address_space *mapping;
+ 		gfp_t mask;
+ 
+-		filp = shmem_file_setup("i915-shmem-tt", size, VM_NORESERVE);
++		filp = shmem_file_setup("i915-shmem-tt", size, shmem_flags);
+ 		if (IS_ERR(filp))
+ 			return PTR_ERR(filp);
+ 
+diff --git a/drivers/gpu/drm/i915/gt/shmem_utils.c b/drivers/gpu/drm/i915/gt/shmem_utils.c
+--- a/drivers/gpu/drm/i915/gt/shmem_utils.c
++++ b/drivers/gpu/drm/i915/gt/shmem_utils.c
+@@ -17,9 +17,14 @@
+ struct file *shmem_create_from_data(const char *name, void *data, size_t len)
+ {
+ 	struct file *file;
++#ifdef BPM_VMA_FLAGS_T_NOT_PRESENT
++	unsigned long shmem_flags = VM_NORESERVE;
++#else
++	vma_flags_t shmem_flags = mk_vma_flags(VMA_NORESERVE_BIT);
++#endif
+ 	int err;
+ 
+-	file = shmem_file_setup(name, PAGE_ALIGN(len), VM_NORESERVE);
++	file = shmem_file_setup(name, PAGE_ALIGN(len), shmem_flags);
+ 	if (IS_ERR(file))
+ 		return file;
+ 
+diff --git a/drivers/gpu/drm/i915/i915_drv.h b/drivers/gpu/drm/i915/i915_drv.h
+--- a/drivers/gpu/drm/i915/i915_drv.h
++++ b/drivers/gpu/drm/i915/i915_drv.h
+@@ -32,6 +32,7 @@
+ 
+ #include <uapi/drm/i915_drm.h>
+ 
++#include <drm/drm_print.h>
+ #include <linux/pci.h>
+ #include <linux/pm_qos.h>
+ 
+diff --git a/drivers/gpu/drm/i915/i915_ioc32.c b/drivers/gpu/drm/i915/i915_ioc32.c
+--- a/drivers/gpu/drm/i915/i915_ioc32.c
++++ b/drivers/gpu/drm/i915/i915_ioc32.c
+@@ -26,6 +26,7 @@
+  *
+  * Author: Alan Hourihane <alanh@fairlite.demon.co.uk>
+  */
++#include <linux/module.h>
+ #include <linux/compat.h>
+ 
+ #include <drm/drm_ioctl.h>
+diff --git a/include/uapi/drm/i915_drm.h b/include/uapi/drm/i915_drm.h
+--- a/include/uapi/drm/i915_drm.h
++++ b/include/uapi/drm/i915_drm.h
+@@ -27,7 +27,11 @@
+ #ifndef _UAPI_I915_DRM_H_
+ #define _UAPI_I915_DRM_H_
+ 
++#ifdef __KERNEL__
++#include <uapi/drm/drm.h>
++#else
+ #include "drm.h"
++#endif
+ 
+ #if defined(__cplusplus)
+ extern "C" {
