@@ -8,7 +8,7 @@ HEADERS="/lib/modules/`uname -r`/build"
 ACTION="compile"
 
 show_help() {
-	echo "XE oot driver configure and compilation script"
+	echo "i915 backport infrastructure configure and compilation script"
         echo "Usage:"
         echo "  $0 [ACTION] [HEADERS_PATH]"
         echo ""
@@ -73,12 +73,12 @@ autoconf
 autoheader
 automake --add-missing
 #TBD: make package creation independent from autotools
-./configure --enable-linux-builtin --with-linux=$HEADERS
+./configure --enable-linux-builtin --with-linux="$HEADERS" || exit $?
 
 case "$ACTION" in
         compile)
                 echo "Starting Compilation"
-                cp src/defconfigs/xe src/.config
+                cp src/defconfigs/i915 src/.config
                 make olddefconfig
                 make -j$NPC modules
                 echo "Compilation Done"

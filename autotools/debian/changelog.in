@@ -1,5 +1,5 @@
 pkg-name (1.586.241223.0) UNRELEASED; urgency=low
 
-  New driver source to xe oot against 6.8-generic
+  Shared i915 backport infrastructure sources
 
  -- Intel Linux Graphics Team <linux-graphics@intel.com>  Sat, 25 Nov 2024 00:48:15 +0530

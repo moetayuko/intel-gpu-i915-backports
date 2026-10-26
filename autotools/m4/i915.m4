@@ -1,4 +1,4 @@
-AC_DEFUN([AC_XE_CONFIG], [
+AC_DEFUN([AC_I915_CONFIG], [
 	AC_ARG_ENABLE([linux-builtin],
 		[AS_HELP_STRING([--enable-linux-builtin],
 		[Configure for builtin kernel modules @<:@default=no@:>@])],

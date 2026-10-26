@@ -38,5 +38,5 @@ subdir-ccflags-y += -std=gnu11
 
 obj-y += compat/
 
-# Shared DRM modules
-obj-$(CPTCFG_DRM_TTM)   += drivers/gpu/drm/ttm/
+# Intel graphics driver
+obj-$(CPTCFG_DRM_I915) += drivers/gpu/drm/i915/

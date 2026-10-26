@@ -36,8 +36,8 @@ export KLIB KLIB_BUILD BACKPORT_DIR KMODDIR KMODPATH_ARG TARGET_KERNEL_NAME
 
 # Packaging targets Available
 #
-DEB_PKG_DISTRO_TARGETS := xe-dkms-deb-pkg
-RPM_PKG_DISTRO_TARGETS := xe-dkms-rpm-pkg
+DEB_PKG_DISTRO_TARGETS := i915-dkms-deb-pkg
+RPM_PKG_DISTRO_TARGETS := i915-dkms-rpm-pkg
 
 # PKG_DISTRO_TARGETS
 # DKMS Package Targets

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#postrm script for intel-xe-dkms
+#postrm script for intel-i915-dkms
 
 set -e
 

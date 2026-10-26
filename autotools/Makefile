@@ -44,25 +44,24 @@ DEV_TAG=$(shell echo $(DEV_TAG_RAW) | sed 's/^v//')
 VERSION=$(KER_VER)
 RELEASE_VERSION=$(DEV_TAG).$(BP_DATE)
 
-XE_PKG_NAME=intel-xe-dkms
-XE_PKG_VERSION=$(VERSION)
-XE_PKG_RELEASE=$(RELEASE_VERSION)_1
-XE_RPM_MK_SPEC=$(BACKPORT_DIR)/scripts/backport-mkdrmdkmsspec
-XE_RPM_MK_DKMS=$(BACKPORT_DIR)/scripts/backport-mkdrmdkmsconf
+I915_PKG_NAME=intel-i915-dkms
+I915_PKG_VERSION=$(VERSION)
+I915_PKG_RELEASE=$(RELEASE_VERSION)_1
+I915_RPM_MK_SPEC=$(BACKPORT_DIR)/scripts/backport-mkdrmdkmsspec
+I915_RPM_MK_DKMS=$(BACKPORT_DIR)/scripts/backport-mkdrmdkmsconf
 
-# DEB package version: <KER_VER>-<DEV_TAG>.<BKPT_VER> e.g. intel-xe-dkms_6.12.0.124.8.1-6.17.13.49.260409.4+i1-1_all.deb
-XE_DEB_PKG_VERSION=$(KER_VER)-$(DEV_TAG).$(BKPT_VER)
-XE_DEB_PKG_RELEASE=1
+# DEB package version: <KER_VER>-<DEV_TAG>.<BKPT_VER> e.g. intel-i915-dkms_6.12.0.124.8.1-6.17.13.49.260409.4+i1-1_all.deb
+I915_DEB_PKG_VERSION=$(KER_VER)-$(DEV_TAG).$(BKPT_VER)
+I915_DEB_PKG_RELEASE=1
 DEF_VER=$(shell cat debian/changelog.in | head -1 | cut -d '(' -f 2 | cut -d ')' -f 1)
-XE_DKMS_MK_CONTROL=$(BACKPORT_DIR)/scripts/backport-mkdebcontrol
-XE_DKMS_MK_RULES=$(BACKPORT_DIR)/scripts/backport-mkdebrules
-XE_DKMS_MK_DKMS=$(BACKPORT_DIR)/scripts/backport-mkxedebdkms
-XE_DKMS_MK_README=$(BACKPORT_DIR)/scripts/backport-mkdebreadme
-XE_DKMS_MK_COPYRIGHT=$(BACKPORT_DIR)/scripts/backport-mkdebcopyright
-KBUILD_ONLYXEDIRS := src/drivers/gpu src/include src/scripts src/drivers/platform src/drivers/mtd
-KBUILD_XEVFIOPCIDIRS := src/drivers/vfio/pci/xe
+I915_DKMS_MK_CONTROL=$(BACKPORT_DIR)/scripts/backport-mkdebcontrol
+I915_DKMS_MK_RULES=$(BACKPORT_DIR)/scripts/backport-mkdebrules
+I915_DKMS_MK_DKMS=$(BACKPORT_DIR)/scripts/backport-mki915debdkms
+I915_DKMS_MK_README=$(BACKPORT_DIR)/scripts/backport-mkdebreadme
+I915_DKMS_MK_COPYRIGHT=$(BACKPORT_DIR)/scripts/backport-mkdebcopyright
+KBUILD_ONLYI915DIRS := src/drivers/gpu src/include src/scripts src/drivers/platform
 KBUILD_AUTOTOOLS := m4 AUTHORS ChangeLog configure.ac COPYING INSTALL Makefile Makefile.am NEWS README.md compile.sh
-XE_TAR_CONTENT=$(KBUILD_ONLYXEDIRS) $(KBUILD_AUTOTOOLS) $(KBUILD_XEVFIOPCIDIRS) src/Makefile* src/local-symbols src/MAINTAINERS src/local-symbols-autoconf \
+I915_TAR_CONTENT=$(KBUILD_ONLYI915DIRS) $(KBUILD_AUTOTOOLS) src/Makefile* src/local-symbols src/MAINTAINERS src/local-symbols-autoconf \
 	src/Kconfig src/Kconfig.sources src/Kconfig.package.hacks src/COPYING src/versions src/defconfigs src/backport-include src/kconf src/compat
 
 # Export variables for sub-makes
@@ -80,43 +79,43 @@ modules olddefconfig menuconfig savedefconfig:
 show-version:
 	@echo "Target Kernel Version : $(TARGET_KERN_VER)"
 	@echo "Kernel Headers Path   : $(KLIB_BUILD)"
-	@echo "Package Version (RPM) : $(XE_PKG_VERSION)"
-	@echo "Package Release (RPM) : $(XE_PKG_RELEASE)$(if $(DISTRO_SUFFIX),.$(DISTRO_SUFFIX))"
-	@echo "Expected RPM Name     : $(XE_PKG_NAME)-$(XE_PKG_VERSION)-$(XE_PKG_RELEASE)$(if $(DISTRO_SUFFIX),.$(DISTRO_SUFFIX)).x86_64.rpm"
-	@echo "Package Version (DEB) : $(XE_DEB_PKG_VERSION)"
-	@echo "Expected DEB Name     : $(XE_PKG_NAME)_$(XE_DEB_PKG_VERSION)+i$(XE_DEB_PKG_RELEASE)-1_all.deb"
+	@echo "Package Version (RPM) : $(I915_PKG_VERSION)"
+	@echo "Package Release (RPM) : $(I915_PKG_RELEASE)$(if $(DISTRO_SUFFIX),.$(DISTRO_SUFFIX))"
+	@echo "Expected RPM Name     : $(I915_PKG_NAME)-$(I915_PKG_VERSION)-$(I915_PKG_RELEASE)$(if $(DISTRO_SUFFIX),.$(DISTRO_SUFFIX)).x86_64.rpm"
+	@echo "Package Version (DEB) : $(I915_DEB_PKG_VERSION)"
+	@echo "Expected DEB Name     : $(I915_PKG_NAME)_$(I915_DEB_PKG_VERSION)+i$(I915_DEB_PKG_RELEASE)-1_all.deb"
 
-.PHONY: xe-dkms-rpm-pkg
-xe-dkms-rpm-pkg: clean
+.PHONY: i915-dkms-rpm-pkg
+i915-dkms-rpm-pkg: clean
 	@echo "========================================"
 	@echo "Building DKMS RPM package"
 	@echo "Target Kernel: $(TARGET_KERN_VER)"
-	@echo "Package version: $(XE_PKG_VERSION)-$(XE_PKG_RELEASE)"
+	@echo "Package version: $(I915_PKG_VERSION)-$(I915_PKG_RELEASE)"
 	@echo "========================================"
 	@echo "Pre-configuring source for DKMS..."
-	@cd src && test -f .config || $(MAKE) defconfig-xe
+	@cd src && test -f .config || $(MAKE) defconfig-i915
 	@echo "Pre-generating backport autoconf.h..."
 	@cd src && $(MAKE) backport-include/backport/autoconf.h
 	mkdir -p rpm
 	mkdir -p ~/rpmbuild/SOURCES
-	$(CONFIG_SHELL) $(XE_RPM_MK_SPEC) -n $(XE_PKG_NAME) -v $(XE_PKG_VERSION) -r $(XE_PKG_RELEASE) $(if $(DISTRO_SUFFIX),-d $(DISTRO_SUFFIX)) -z dkms > rpm/$(XE_PKG_NAME).spec
-	$(CONFIG_SHELL) $(XE_RPM_MK_DKMS) -n $(XE_PKG_NAME) -v $(XE_PKG_VERSION) -r $(XE_PKG_RELEASE) > rpm/$(XE_PKG_NAME).dkms.conf
+	$(CONFIG_SHELL) $(I915_RPM_MK_SPEC) -n $(I915_PKG_NAME) -v $(I915_PKG_VERSION) -r $(I915_PKG_RELEASE) $(if $(DISTRO_SUFFIX),-d $(DISTRO_SUFFIX)) -z dkms > rpm/$(I915_PKG_NAME).spec
+	$(CONFIG_SHELL) $(I915_RPM_MK_DKMS) -n $(I915_PKG_NAME) -v $(I915_PKG_VERSION) -r $(I915_PKG_RELEASE) > rpm/$(I915_PKG_NAME).dkms.conf
 	cp -r src m4 debian Makefile* configure* aclocal.m4 AUTHORS ChangeLog COPYING INSTALL NEWS README compile.sh ~/rpmbuild/SOURCES/ 2>/dev/null || true
-	+rpmbuild -bb --define "_sourcedir $(PWD)" rpm/$(XE_PKG_NAME).spec
+	+rpmbuild -bb --define "_sourcedir $(PWD)" rpm/$(I915_PKG_NAME).spec
 
-.PHONY: xe-dkms-deb-pkg
-xe-dkms-deb-pkg: clean
+.PHONY: i915-dkms-deb-pkg
+i915-dkms-deb-pkg: clean
 	@echo "========================================"
 	@echo "Building DKMS DEB package"
 	@echo "Target Kernel: $(TARGET_KERN_VER)"
-	@echo "Package version: $(XE_DEB_PKG_VERSION)-$(XE_DEB_PKG_RELEASE)"
+	@echo "Package version: $(I915_DEB_PKG_VERSION)-$(I915_DEB_PKG_RELEASE)"
 	@echo "========================================"
-	$(CONFIG_SHELL) $(XE_DKMS_MK_CONTROL) -n $(XE_PKG_NAME) -v $(XE_DEB_PKG_VERSION) -r $(XE_DEB_PKG_RELEASE) -z dkms > debian/control
-	$(CONFIG_SHELL) $(XE_DKMS_MK_RULES) -n $(XE_PKG_NAME) -v $(XE_DEB_PKG_VERSION) -r $(XE_DEB_PKG_RELEASE) -z dkms > debian/rules
+	$(CONFIG_SHELL) $(I915_DKMS_MK_CONTROL) -n $(I915_PKG_NAME) -v $(I915_DEB_PKG_VERSION) -r $(I915_DEB_PKG_RELEASE) -z dkms > debian/control
+	$(CONFIG_SHELL) $(I915_DKMS_MK_RULES) -n $(I915_PKG_NAME) -v $(I915_DEB_PKG_VERSION) -r $(I915_DEB_PKG_RELEASE) -z dkms > debian/rules
 	cp debian/changelog.in debian/changelog
-	sed -i 's/pkg-name/$(XE_PKG_NAME)/g' debian/changelog
-	sed -i 's/$(DEF_VER)/$(XE_DEB_PKG_VERSION)/g' debian/changelog
-	for i in $(XE_TAR_CONTENT); do \
+	sed -i 's/pkg-name/$(I915_PKG_NAME)/g' debian/changelog
+	sed -i 's/$(DEF_VER)/$(I915_DEB_PKG_VERSION)/g' debian/changelog
+	for i in $(I915_TAR_CONTENT); do \
 		z=$$(expr index $$i "="); \
 		if [ $$z = 0 ]; then \
 			x=$$(expr index $$i "/"); \
@@ -127,11 +126,11 @@ xe-dkms-deb-pkg: clean
 				echo "$$i /usr/src/@BACKPORT_PACKAGE_NAME@-@BACKPORT_PACKAGE_VERSION@"; \
 			fi \
 		fi \
-	done > debian/$(XE_PKG_NAME).install.in
-	$(CONFIG_SHELL) $(XE_DKMS_MK_DKMS) -n $(XE_PKG_NAME) -v $(XE_DEB_PKG_VERSION) -r $(XE_DEB_PKG_RELEASE) > debian/$(XE_PKG_NAME).dkms.in
-	$(CONFIG_SHELL) $(XE_DKMS_MK_README) -n $(XE_PKG_NAME) -v $(XE_DEB_PKG_VERSION) -r $(XE_DEB_PKG_RELEASE) > debian/README.Debian
-	$(CONFIG_SHELL) $(XE_DKMS_MK_COPYRIGHT) -n $(XE_PKG_NAME) -v $(XE_DEB_PKG_VERSION) -r $(XE_DEB_PKG_RELEASE) > debian/copyright
-	+dch -l "+i${XE_DEB_PKG_RELEASE}-" -m "build ${XE_DEB_PKG_RELEASE}"
+	done > debian/$(I915_PKG_NAME).install.in
+	$(CONFIG_SHELL) $(I915_DKMS_MK_DKMS) -n $(I915_PKG_NAME) -v $(I915_DEB_PKG_VERSION) -r $(I915_DEB_PKG_RELEASE) > debian/$(I915_PKG_NAME).dkms.in
+	$(CONFIG_SHELL) $(I915_DKMS_MK_README) -n $(I915_PKG_NAME) -v $(I915_DEB_PKG_VERSION) -r $(I915_DEB_PKG_RELEASE) > debian/README.Debian
+	$(CONFIG_SHELL) $(I915_DKMS_MK_COPYRIGHT) -n $(I915_PKG_NAME) -v $(I915_DEB_PKG_VERSION) -r $(I915_DEB_PKG_RELEASE) > debian/copyright
+	+dch -l "+i${I915_DEB_PKG_RELEASE}-" -m "build ${I915_DEB_PKG_RELEASE}"
 	+dpkg-buildpackage -j`nproc --all` -us -uc -b -rfakeroot
 
 endif # End of user/packaging mode

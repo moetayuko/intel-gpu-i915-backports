@@ -16,11 +16,7 @@ Documentation/process/license-rules.rst
 MAINTAINERS
 
 #Headers
-include/drm/intel/pciids.h
-include/drm/intel/i915_component.h
-include/drm/intel/pick.h
-include/drm/intel/reg_bits.h
-include/drm/ttm/
+include/drm/intel/
 include/linux/cgroup_dmem.h
 include/linux/array_size.h
 include/uapi/linux/pci_regs.h
@@ -31,10 +27,12 @@ include/drm/drm_gem.h
 
 #ttm
 drivers/gpu/drm/Kconfig
-drivers/gpu/drm/ttm/
 
 drivers/platform/x86/intel_ips.h
 
 include/linux/mei_aux.h
-include/drm/intel/i915_hdcp_interface.h
-include/drm/intel/i915_pxp_tee_interface.h
+
+#i915
+drivers/gpu/drm/i915/
+include/drm/i915_sriov.h
+include/uapi/drm/i915_drm.h

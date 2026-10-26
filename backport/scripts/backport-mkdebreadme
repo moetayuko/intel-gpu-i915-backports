@@ -3,7 +3,7 @@
 #       Output a readme file for debian package
 #
 
-PKG_NAME="intel-xe"
+PKG_NAME="intel-i915"
 PKG_VER="1.0"
 REL_NAME="1"
 REL_TYPE=""

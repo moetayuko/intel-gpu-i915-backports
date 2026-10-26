@@ -1,0 +1,68 @@
+#!/bin/sh
+#
+# Creates a dkms.conf file
+
+PKG_NAME="intel-i915-dkms"
+PKG_VER="1.0"
+REL_NAME="1"
+REL_TYPE=""
+BUILD_TYPE=""
+I915_CONFIG="i915"
+
+helpFunction()
+{
+	echo ""
+	echo "Usage: $0 -n packagename -v packageversion -r releaseversion -s buildversion"
+	echo -e "\t-n packagename"
+	echo -e "\t-v packageversion"
+	echo -e "\t-r releaseversion"
+	echo -e "\t-s buildversion"
+	exit 1
+}
+
+while getopts "n:v:r:s:" opt
+do
+	case "$opt" in
+		n ) PKG_NAME="$OPTARG" ;;
+		v ) PKG_VER="$OPTARG" ;;
+		r ) REL_NAME="$OPTARG" ;;
+		s ) BUILD_TYPE="$OPTARG" ;;
+		? ) helpFunction ;;
+	esac
+done
+
+# Control below line by conditionally adding DEL at the beginning of line
+# those lines will be disabled by sed
+#
+sed -e '/^DEL/d' -e 's/^\t*//' <<EOF
+	PACKAGE_NAME="$PKG_NAME"
+	PACKAGE_VERSION="$PKG_VER"
+	AUTOINSTALL="yes"
+
+	BUILT_MODULE_NAME[0]="i915-compat"
+	BUILT_MODULE_LOCATION[0]="src/compat"
+	DEST_MODULE_LOCATION[0]="/updates"
+
+	BUILT_MODULE_NAME[1]="i915"
+	BUILT_MODULE_LOCATION[1]="src/drivers/gpu/drm/i915"
+	DEST_MODULE_LOCATION[1]="/updates"
+
+	# Find out how many CPU cores can be use if we pass appropriate -j option to make.
+	# DKMS could use all cores on multicore systems to build the kernel module.
+	num_cpu_cores()
+	{
+		if [ -x /usr/bin/nproc ]; then
+			np=\$(nproc)
+			if [ "\$np" -le "64" ]; then
+				echo "\$np"
+			else
+				echo "64"
+			fi
+		else
+			echo "1"
+		fi
+	}
+
+	MAKE="export LEX=flex; export YACC=bison; pwd; autoreconf --install; autoconf ; autoheader ;automake --add-missing ;./configure --enable-linux-builtin --with-linux=/lib/modules/\$kernelver/build && cp src/defconfigs/$I915_CONFIG src/.config && make olddefconfig && make -j\$(num_cpu_cores) modules"
+	CLEAN="export LEX=flex; export YACC=bison; 'make' mrproper"
+EOF

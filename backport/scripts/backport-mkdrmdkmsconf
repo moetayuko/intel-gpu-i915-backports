@@ -3,7 +3,7 @@
 # Creates a dkms.conf file for RPM DKMS package
 #
 
-PKG_NAME="intel-xe-dkms"
+PKG_NAME="intel-i915-dkms"
 PKG_VER="1.0"
 REL_NAME="1"
 BUILD_TYPE=""
@@ -42,124 +42,12 @@ sed -e '/^DEL/d' -e 's/^\t*//' <<EOF
 
 	CLEAN="export LEX=flex; export YACC=bison; 'make' -C src clean 2>/dev/null || true; 'make' mrproper 2>/dev/null || true"
 
-	BUILT_MODULE_NAME[0]="xe-compat"
+	BUILT_MODULE_NAME[0]="i915-compat"
 	BUILT_MODULE_LOCATION[0]="src/compat"
 	DEST_MODULE_LOCATION[0]="/updates"
 
-	BUILT_MODULE_NAME[1]="xe"
-	BUILT_MODULE_LOCATION[1]="src/drivers/gpu/drm/xe"
+	BUILT_MODULE_NAME[1]="i915"
+	BUILT_MODULE_LOCATION[1]="src/drivers/gpu/drm/i915"
 	DEST_MODULE_LOCATION[1]="/updates"
 
-	BUILT_MODULE_NAME[2]="ttm"
-	BUILT_MODULE_LOCATION[2]="src/drivers/gpu/drm/ttm"
-	DEST_MODULE_LOCATION[2]="/updates"
-
-	BUILT_MODULE_NAME[3]="drm_ttm_helper"
-	BUILT_MODULE_LOCATION[3]="src"
-	DEST_MODULE_LOCATION[3]="/updates"
-
-	BUILT_MODULE_NAME[4]="gpu-sched"
-	BUILT_MODULE_LOCATION[4]="src/drivers/gpu/drm/scheduler"
-	DEST_MODULE_LOCATION[4]="/updates"
-
-	BUILT_MODULE_NAME[5]="intel-vsec"
-	BUILT_MODULE_LOCATION[5]="src/drivers/platform/x86/intel"
-	DEST_MODULE_LOCATION[5]="/updates"
-
-	BUILT_MODULE_NAME[6]="pmt_class"
-	BUILT_MODULE_LOCATION[6]="src/drivers/platform/x86/intel/pmt"
-	DEST_MODULE_LOCATION[6]="/updates"
-
-	BUILT_MODULE_NAME[7]="pmt_telemetry"
-	BUILT_MODULE_LOCATION[7]="src/drivers/platform/x86/intel/pmt"
-	DEST_MODULE_LOCATION[7]="/updates"
-
-	BUILT_MODULE_NAME[8]="pmt_crashlog"
-	BUILT_MODULE_LOCATION[8]="src/drivers/platform/x86/intel/pmt"
-	DEST_MODULE_LOCATION[8]="/updates"
-
-	BUILT_MODULE_NAME[9]="pmt_discovery"
-	BUILT_MODULE_LOCATION[9]="src/drivers/platform/x86/intel/pmt"
-	DEST_MODULE_LOCATION[9]="/updates"
-
-	BUILT_MODULE_NAME[10]="mtd_intel_dg"
-	BUILT_MODULE_LOCATION[10]="src"
-	DEST_MODULE_LOCATION[10]="/updates"
-
-	BUILT_MODULE_NAME[11]="xe-vfio-pci"
-	BUILT_MODULE_LOCATION[11]="src/drivers/vfio/pci/xe"
-	DEST_MODULE_LOCATION[11]="/updates"
-
-	BUILT_MODULE_NAME[12]="drm_gpusvm_helper"
-	BUILT_MODULE_LOCATION[12]="src"
-	DEST_MODULE_LOCATION[12]="/updates"
-
-	BUILT_MODULE_NAME[13]="mei"
-	BUILT_MODULE_LOCATION[13]="src/drivers/misc/mei"
-	DEST_MODULE_LOCATION[13]="/updates"
-
-	BUILT_MODULE_NAME[14]="mei-me"
-	BUILT_MODULE_LOCATION[14]="src/drivers/misc/mei"
-	DEST_MODULE_LOCATION[14]="/updates"
-
-	BUILT_MODULE_NAME[15]="mei-gsc"
-	BUILT_MODULE_LOCATION[15]="src/drivers/misc/mei"
-	DEST_MODULE_LOCATION[15]="/updates"
-
-	BUILT_MODULE_NAME[16]="mei-txe"
-	BUILT_MODULE_LOCATION[16]="src/drivers/misc/mei"
-	DEST_MODULE_LOCATION[16]="/updates"
-
-	BUILT_MODULE_NAME[17]="mei_hdcp"
-	BUILT_MODULE_LOCATION[17]="src/drivers/misc/mei/hdcp"
-	DEST_MODULE_LOCATION[17]="/updates"
-
-	BUILT_MODULE_NAME[18]="mei_pxp"
-	BUILT_MODULE_LOCATION[18]="src/drivers/misc/mei/pxp"
-	DEST_MODULE_LOCATION[18]="/updates"
-
-	BUILT_MODULE_NAME[19]="mei_gsc_proxy"
-	BUILT_MODULE_LOCATION[19]="src/drivers/misc/mei/gsc_proxy"
-	DEST_MODULE_LOCATION[19]="/updates"
-
-	BUILT_MODULE_NAME[20]="mei_lb"
-	BUILT_MODULE_LOCATION[20]="src/drivers/misc/mei"
-	DEST_MODULE_LOCATION[20]="/updates"
-
-	BUILT_MODULE_NAME[21]="mei-vsc"
-	BUILT_MODULE_LOCATION[21]="src/drivers/misc/mei"
-	DEST_MODULE_LOCATION[21]="/updates"
-
-	BUILT_MODULE_NAME[22]="mei-vsc-hw"
-	BUILT_MODULE_LOCATION[22]="src/drivers/misc/mei"
-	DEST_MODULE_LOCATION[22]="/updates"
-	
-	BUILT_MODULE_NAME[23]="mei-csc"
-	BUILT_MODULE_LOCATION[23]="src/drivers/misc/mei"
-	DEST_MODULE_LOCATION[23]="/updates"
-	
-	BUILT_MODULE_NAME[24]="drm_ras"
-	BUILT_MODULE_LOCATION[24]="src"
-	DEST_MODULE_LOCATION[24]="/updates"
-
-	select_drm_gpuvm() {
-		if [ -z "\$kernelver" ]; then
-			echo "false"
-			return
-		fi
-		KSRC="/usr/src/kernels/\$kernelver"
-		if [ ! -d "\$KSRC" ]; then
-			KSRC="/lib/modules/\$kernelver/build"
-		fi
-		if [ -f "\$KSRC/Module.symvers" ] && grep -qw "drm_gpuvm_init" "\$KSRC/Module.symvers"; then
-			echo "false"
-			return
-		fi
-		echo "true"
-	}
-	if [ "\$(select_drm_gpuvm)" = "true" ]; then
-		BUILT_MODULE_NAME[25]="drm_gpuvm"
-		BUILT_MODULE_LOCATION[25]="src"
-		DEST_MODULE_LOCATION[25]="/updates"
-	fi
 EOF
