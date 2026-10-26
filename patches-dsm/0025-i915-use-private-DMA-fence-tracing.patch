@@ -1,0 +1,13 @@
+Subject: [PATCH] i915: use private DMA-fence tracing
+
+--- a/drivers/gpu/drm/i915/gt/intel_breadcrumbs.c
++++ b/drivers/gpu/drm/i915/gt/intel_breadcrumbs.c
+@@ -137,7 +137,7 @@
+ {
+ 	fence->timestamp = timestamp;
+ 	set_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT, &fence->flags);
+-	trace_dma_fence_signaled(fence);
++	trace_i915_dma_fence_signaled(fence);
+ }
+ 
+ static void

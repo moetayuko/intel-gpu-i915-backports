@@ -111,3 +111,17 @@ AC_DEFUN([AC_KZALLOC_FLEX_NOT_PRESENT], [
 		])
 	])
 ])
+
+AC_DEFUN([AC_KREALLOC_ARRAY_NOT_PRESENT], [
+	AC_KERNEL_DO_BACKGROUND([
+		AC_KERNEL_TRY_COMPILE([
+			#include <linux/slab.h>
+		], [
+			void *ptr = krealloc_array(NULL, 2, 4, GFP_KERNEL);
+			kfree(ptr);
+		], [], [
+			AC_DEFINE(BPM_KREALLOC_ARRAY_NOT_PRESENT, 1,
+				[krealloc_array() is not available])
+		])
+	])
+])

@@ -35,3 +35,15 @@ AC_DEFUN([AC_DMA_RESV_FOR_EACH_FENCE_NOT_PRESENT], [
                         ])
         ])
 ])
+AC_DEFUN([AC_DMA_RESV_SHARED_LIST_NOT_PRESENT], [
+	AC_KERNEL_DO_BACKGROUND([
+		AC_KERNEL_TRY_COMPILE([
+			#include <linux/dma-resv.h>
+		], [
+			(void)dma_resv_shared_list((struct dma_resv *)0);
+		], [], [
+			AC_DEFINE(BPM_DMA_RESV_SHARED_LIST_NOT_PRESENT, 1,
+				[dma_resv_shared_list() is not available])
+		])
+	])
+])

@@ -1,0 +1,37 @@
+--- a/drivers/gpu/drm/drm_sysfs.c
++++ b/drivers/gpu/drm/drm_sysfs.c
+@@ -96,7 +96,7 @@
+ static void drm_sysfs_acpi_unregister(void) { }
+ #endif
+ 
+-static char *drm_devnode(const struct device *dev, umode_t *mode)
++static char *drm_devnode(struct device *dev, umode_t *mode)
+ {
+ 	return kasprintf(GFP_KERNEL, "dri/%s", dev_name(dev));
+ }
+@@ -264,7 +264,7 @@
+ }
+ 
+ static ssize_t edid_show(struct file *filp, struct kobject *kobj,
+-			 const struct bin_attribute *attr, char *buf, loff_t off,
++			 struct bin_attribute *attr, char *buf, loff_t off,
+ 			 size_t count)
+ {
+ 	struct device *connector_dev = kobj_to_dev(kobj);
+@@ -318,14 +318,14 @@
+ 	NULL
+ };
+ 
+-static const struct bin_attribute edid_attr = {
++static struct bin_attribute edid_attr = {
+ 	.attr.name = "edid",
+ 	.attr.mode = 0444,
+ 	.size = 0,
+ 	.read = edid_show,
+ };
+ 
+-static const struct bin_attribute *const connector_bin_attrs[] = {
++static struct bin_attribute *connector_bin_attrs[] = {
+ 	&edid_attr,
+ 	NULL
+ };

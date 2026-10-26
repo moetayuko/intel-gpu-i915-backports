@@ -1,0 +1,40 @@
+--- a/drivers/gpu/drm/i915/gem/i915_gemfs.c
++++ b/drivers/gpu/drm/i915/gem/i915_gemfs.c
+@@ -14,9 +14,7 @@
+ void i915_gemfs_init(struct drm_i915_private *i915)
+ {
+ 	struct file_system_type *type;
+-	struct fs_context *fc;
+ 	struct vfsmount *gemfs;
+-	int ret;
+ 
+ 	/*
+ 	 * By creating our own shmemfs mountpoint, we can pass in
+@@ -40,16 +38,9 @@
+ 	if (!type)
+ 		goto err;
+ 
+-	fc = fs_context_for_mount(type, SB_KERNMOUNT);
+-	if (IS_ERR(fc))
+-		goto err;
+-	ret = vfs_parse_fs_string(fc, "source", "tmpfs");
+-	if (!ret)
+-		ret = vfs_parse_fs_string(fc, "huge", "within_size");
+-	if (!ret)
+-		gemfs = fc_mount_longterm(fc);
+-	put_fs_context(fc);
+-	if (ret)
++	gemfs = vfs_kern_mount(type, SB_KERNMOUNT, "tmpfs", "huge=within_size");
++	put_filesystem(type);
++	if (IS_ERR(gemfs))
+ 		goto err;
+ 
+ 	i915->mm.gemfs = gemfs;
+@@ -65,5 +56,6 @@
+ 
+ void i915_gemfs_fini(struct drm_i915_private *i915)
+ {
+-	kern_unmount(i915->mm.gemfs);
++	if (i915->mm.gemfs)
++		mntput(i915->mm.gemfs);
+ }

@@ -2,6 +2,7 @@
 #define __BACKPORT_DRM_DEVICE_H_
 
 #include_next<drm/drm_device.h>
+#include <linux/sched.h>
 
 #ifdef BPM_DRM_DEV_WEDGED_EVENT_NOT_PRESENT
 

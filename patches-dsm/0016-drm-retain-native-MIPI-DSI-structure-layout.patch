@@ -1,0 +1,43 @@
+--- a/dsm/include/drm/drm_mipi_dsi.h
++++ b/dsm/include/drm/drm_mipi_dsi.h
+@@ -184,7 +184,9 @@
+ struct mipi_dsi_device {
+ 	struct mipi_dsi_host *host;
+ 	struct device dev;
++#if IS_ENABLED(CPTCFG_DRM_MIPI_DSI_BACKPORT) || defined(BPM_MIPI_DSI_DEVICE_ATTACHED_PRESENT)
+ 	bool attached;
++#endif
+ 
+ 	char name[DSI_DEV_NAME_SIZE];
+ 	unsigned int channel;
+@@ -193,7 +195,9 @@
+ 	unsigned long mode_flags;
+ 	unsigned long hs_rate;
+ 	unsigned long lp_rate;
++#if IS_ENABLED(CPTCFG_DRM_MIPI_DSI_BACKPORT) || defined(BPM_MIPI_DSI_DEVICE_DSC_PRESENT)
+ 	struct drm_dsc_config *dsc;
++#endif
+ };
+ 
+ /**
+@@ -221,7 +225,7 @@
+ 
+ #define to_mipi_dsi_device(__dev)	container_of_const(__dev, struct mipi_dsi_device, dev)
+ 
+-extern const struct bus_type mipi_dsi_bus_type;
++extern struct bus_type mipi_dsi_bus_type;
+ #define dev_is_mipi_dsi(dev)	((dev)->bus == &mipi_dsi_bus_type)
+ 
+ /**
+@@ -551,7 +555,11 @@
+ struct mipi_dsi_driver {
+ 	struct device_driver driver;
+ 	int(*probe)(struct mipi_dsi_device *dsi);
++#if !IS_ENABLED(CPTCFG_DRM_MIPI_DSI_BACKPORT) && defined(BPM_MIPI_DSI_DRIVER_REMOVE_RETURN_VOID_NOT_PRESENT)
++	int (*remove)(struct mipi_dsi_device *dsi);
++#else
+ 	void (*remove)(struct mipi_dsi_device *dsi);
++#endif
+ 	void (*shutdown)(struct mipi_dsi_device *dsi);
+ };
+ 

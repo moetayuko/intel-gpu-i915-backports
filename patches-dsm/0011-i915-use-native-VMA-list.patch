@@ -1,0 +1,26 @@
+--- a/drivers/gpu/drm/i915/gem/i915_gem_userptr.c
++++ b/drivers/gpu/drm/i915/gem/i915_gem_userptr.c
+@@ -399,12 +399,12 @@
+ static int
+ probe_range(struct mm_struct *mm, unsigned long addr, unsigned long len)
+ {
+-	VMA_ITERATOR(vmi, mm, addr);
+ 	struct vm_area_struct *vma;
+ 	unsigned long end = addr + len;
+ 
+ 	mmap_read_lock(mm);
+-	for_each_vma_range(vmi, vma, end) {
++	for (vma = find_vma(mm, addr);
++	     vma && vma->vm_start < end; vma = vma->vm_next) {
+ 		/* Check for holes, note that we also update the addr below */
+ 		if (vma->vm_start > addr)
+ 			break;
+@@ -416,7 +416,7 @@
+ 	}
+ 	mmap_read_unlock(mm);
+ 
+-	if (vma || addr < end)
++	if (addr < end)
+ 		return -EFAULT;
+ 	return 0;
+ }

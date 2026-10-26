@@ -42,7 +42,7 @@ void drm_print_hex_dump(struct drm_printer *p, const char *prefix,
         int i;
 
         for (i = 0; i < len; i += 16) {
-                int bytes_per_line = min(16, len - i);
+                int bytes_per_line = min_t(size_t, 16, len - i);
 
                 drm_printf(p, "%s%*ph\n", prefix ?: "", bytes_per_line, buf + i);
         }

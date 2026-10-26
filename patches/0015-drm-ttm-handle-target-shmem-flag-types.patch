@@ -1,0 +1,34 @@
+Subject: drm/ttm: handle target shmem flag types
+
+Use empty vma_flags_t flags when the target shmem_file_setup() takes
+a flag structure instead of an unsigned long.
+
+---
+diff --git a/drivers/gpu/drm/ttm/ttm_tt.c b/drivers/gpu/drm/ttm/ttm_tt.c
+--- a/drivers/gpu/drm/ttm/ttm_tt.c
++++ b/drivers/gpu/drm/ttm/ttm_tt.c
+@@ -327,7 +327,11 @@
+ 	struct page *to_page;
+ 	int i, ret;
+ 
++#ifdef BPM_VMA_FLAGS_T_NOT_PRESENT
+ 	swap_storage = shmem_file_setup("ttm swap", size, 0);
++#else
++	swap_storage = shmem_file_setup("ttm swap", size, EMPTY_VMA_FLAGS);
++#endif
+ 	if (IS_ERR(swap_storage)) {
+ 		pr_err("Failed allocating swap storage\n");
+ 		return PTR_ERR(swap_storage);
+diff --git a/drivers/gpu/drm/ttm/ttm_backup.c b/drivers/gpu/drm/ttm/ttm_backup.c
+--- a/drivers/gpu/drm/ttm/ttm_backup.c
++++ b/drivers/gpu/drm/ttm/ttm_backup.c
+@@ -178,5 +178,9 @@
+  */
+ struct file *ttm_backup_shmem_create(loff_t size)
+ {
++#ifdef BPM_VMA_FLAGS_T_NOT_PRESENT
+ 	return shmem_file_setup("ttm shmem backup", size, 0);
++#else
++	return shmem_file_setup("ttm shmem backup", size, EMPTY_VMA_FLAGS);
++#endif
+ }

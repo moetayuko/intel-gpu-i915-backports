@@ -1,0 +1,44 @@
+--- a/drivers/gpu/drm/i915/gt/uc/intel_guc_log.c
++++ b/drivers/gpu/drm/i915/gt/uc/intel_guc_log.c
+@@ -222,7 +222,7 @@
+  */
+ static int subbuf_start_callback(struct rchan_buf *buf,
+ 				 void *subbuf,
+-				 void *prev_subbuf)
++				 void *prev_subbuf, size_t prev_padding)
+ {
+ 	/*
+ 	 * Use no-overwrite mode by default, where relay will stop accepting
+--- a/drivers/gpu/drm/i915/gt/uc/intel_huc.c
++++ b/drivers/gpu/drm/i915/gt/uc/intel_huc.c
+@@ -194,7 +194,7 @@
+ 	return 0;
+ }
+ 
+-void intel_huc_register_gsc_notifier(struct intel_huc *huc, const struct bus_type *bus)
++void intel_huc_register_gsc_notifier(struct intel_huc *huc, struct bus_type *bus)
+ {
+ 	int ret;
+ 
+@@ -210,7 +210,7 @@
+ 	}
+ }
+ 
+-void intel_huc_unregister_gsc_notifier(struct intel_huc *huc, const struct bus_type *bus)
++void intel_huc_unregister_gsc_notifier(struct intel_huc *huc, struct bus_type *bus)
+ {
+ 	if (!huc->delayed_load.nb.notifier_call)
+ 		return;
+--- a/drivers/gpu/drm/i915/gt/uc/intel_huc.h
++++ b/drivers/gpu/drm/i915/gt/uc/intel_huc.h
+@@ -68,8 +68,8 @@
+ void intel_huc_update_auth_status(struct intel_huc *huc);
+ int intel_huc_fw_load_and_auth_via_gsc_cs(struct intel_huc *huc);
+ 
+-void intel_huc_register_gsc_notifier(struct intel_huc *huc, const struct bus_type *bus);
+-void intel_huc_unregister_gsc_notifier(struct intel_huc *huc, const struct bus_type *bus);
++void intel_huc_register_gsc_notifier(struct intel_huc *huc, struct bus_type *bus);
++void intel_huc_unregister_gsc_notifier(struct intel_huc *huc, struct bus_type *bus);
+ 
+ static inline bool intel_huc_is_supported(const struct intel_huc *huc)
+ {

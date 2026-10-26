@@ -1,0 +1,67 @@
+--- a/drivers/gpu/drm/i915/display/intel_display_core.h
++++ b/drivers/gpu/drm/i915/display/intel_display_core.h
+@@ -174,7 +174,7 @@
+ 	u32 short_hpd_pin_mask;
+ 	struct work_struct dig_port_work;
+ 
+-	struct work_struct poll_init_work;
++	struct delayed_work poll_init_work;
+ 	bool poll_enabled;
+ 
+ 	/*
+--- a/drivers/gpu/drm/i915/display/intel_hotplug.c
++++ b/drivers/gpu/drm/i915/display/intel_hotplug.c
+@@ -782,7 +782,7 @@
+ static void i915_hpd_poll_init_work(struct work_struct *work)
+ {
+ 	struct intel_display *display =
+-		container_of(work, typeof(*display), hotplug.poll_init_work);
++		container_of(work, typeof(*display), hotplug.poll_init_work.work);
+ 	struct drm_connector_list_iter conn_iter;
+ 	struct intel_connector *connector;
+ 	intel_wakeref_t wakeref;
+@@ -802,7 +802,7 @@
+ 						  POWER_DOMAIN_DISPLAY_CORE);
+ 		drm_WARN_ON(display->drm,
+ 			    READ_ONCE(display->hotplug.poll_enabled));
+-		cancel_work(&display->hotplug.poll_init_work);
++		cancel_delayed_work(&display->hotplug.poll_init_work);
+ 	}
+ 
+ 	spin_lock_irq(&display->irq.lock);
+@@ -877,7 +877,7 @@
+ 	 */
+ 	spin_lock_irq(&display->irq.lock);
+ 	queue_detection_work(display,
+-			     &display->hotplug.poll_init_work);
++			     &display->hotplug.poll_init_work.work);
+ 	spin_unlock_irq(&display->irq.lock);
+ }
+ 
+@@ -914,7 +914,7 @@
+ 
+ 	spin_lock_irq(&display->irq.lock);
+ 	queue_detection_work(display,
+-			     &display->hotplug.poll_init_work);
++			     &display->hotplug.poll_init_work.work);
+ 	spin_unlock_irq(&display->irq.lock);
+ }
+ 
+@@ -937,7 +937,7 @@
+ 	INIT_DELAYED_WORK(&display->hotplug.hotplug_work,
+ 			  i915_hotplug_work_func);
+ 	INIT_WORK(&display->hotplug.dig_port_work, i915_digport_work_func);
+-	INIT_WORK(&display->hotplug.poll_init_work, i915_hpd_poll_init_work);
++	INIT_DELAYED_WORK(&display->hotplug.poll_init_work, i915_hpd_poll_init_work);
+ 	INIT_DELAYED_WORK(&display->hotplug.reenable_work,
+ 			  intel_hpd_irq_storm_reenable_work);
+ 
+@@ -957,7 +957,7 @@
+ 
+ 	if (cancel_delayed_work_sync(&display->hotplug.hotplug_work))
+ 		was_pending = true;
+-	if (cancel_work_sync(&display->hotplug.poll_init_work))
++	if (cancel_delayed_work_sync(&display->hotplug.poll_init_work))
+ 		was_pending = true;
+ 	if (cancel_delayed_work_sync(&display->hotplug.reenable_work))
+ 		was_pending = true;

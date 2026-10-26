@@ -1,0 +1,30 @@
+--- a/drivers/gpu/drm/i915/display/intel_vga.c
++++ b/drivers/gpu/drm/i915/display/intel_vga.c
+@@ -95,6 +95,11 @@
+ 	vga_put(pdev, VGA_RSRC_LEGACY_IO);
+ }
+ 
++static unsigned int intel_dsm_vga_set_decode(void *cookie, bool enable)
++{
++	return intel_gmch_vga_set_decode(cookie, enable);
++}
++
+ int intel_vga_register(struct intel_display *display)
+ {
+ 
+@@ -109,7 +114,7 @@
+ 	 * then we do not take part in VGA arbitration and the
+ 	 * vga_client_register() fails with -ENODEV.
+ 	 */
+-	ret = vga_client_register(pdev, intel_gmch_vga_set_decode);
++	ret = vga_client_register(pdev, pdev, NULL, intel_dsm_vga_set_decode);
+ 	if (ret && ret != -ENODEV)
+ 		return ret;
+ 
+@@ -120,5 +125,5 @@
+ {
+ 	struct pci_dev *pdev = to_pci_dev(display->drm->dev);
+ 
+-	vga_client_unregister(pdev);
++	vga_client_register(pdev, NULL, NULL, NULL);
+ }

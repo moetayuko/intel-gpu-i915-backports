@@ -539,6 +539,7 @@ void dma_resv_fini(struct dma_resv *obj)
 }
 EXPORT_SYMBOL(dma_resv_fini);
 
+#ifndef CPTCFG_DRM_BACKPORT
 void drm_gem_object_release(struct drm_gem_object *obj)
 {
 	dma_resv_recover_ptr(&obj->_resv);
@@ -548,6 +549,7 @@ void drm_gem_object_release(struct drm_gem_object *obj)
 #define drm_gem_object_release LINUX_BACKPORT(drm_gem_object_release)
 }
 EXPORT_SYMBOL(drm_gem_object_release);
+#endif
 
 #if IS_ENABLED(CONFIG_LOCKDEP)
 static int __init dma_resv_lockdep(void)

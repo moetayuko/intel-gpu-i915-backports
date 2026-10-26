@@ -1,0 +1,94 @@
+--- a/dsm/include/drm/intel/intel-gtt.h
++++ b/dsm/include/drm/intel/intel-gtt.h
+@@ -9,6 +9,14 @@
+ struct agp_bridge_data;
+ struct pci_dev;
+ struct sg_table;
++#if !IS_ENABLED(CPTCFG_INTEL_GTT_BACKPORT) && defined(BPM_INTEL_GMCH_GTT_GET_NOT_PRESENT)
++#define intel_gmch_gtt_clear_range intel_gtt_clear_range
++#define intel_gmch_gtt_insert_sg_entries intel_gtt_insert_sg_entries
++#define intel_gmch_gtt_insert_page intel_gtt_insert_page
++#define intel_gmch_gtt_flush intel_gtt_chipset_flush
++#define intel_gmch_enable_gtt intel_enable_gtt
++#define intel_gmch_gtt_get intel_gtt_get
++#endif
+ 
+ void intel_gmch_gtt_get(u64 *gtt_total,
+ 			phys_addr_t *mappable_base,
+--- a/drivers/gpu/drm/i915/gt/intel_ggtt_gmch.c
++++ b/drivers/gpu/drm/i915/gt/intel_ggtt_gmch.c
+@@ -30,8 +30,20 @@
+ static dma_addr_t gmch_ggtt_read_entry(struct i915_address_space *vm,
+ 				       u64 offset, bool *is_present, bool *is_local)
+ {
++#if !IS_ENABLED(CPTCFG_INTEL_GTT_BACKPORT) && defined(BPM_INTEL_GMCH_GTT_READ_ENTRY_NOT_PRESENT)
++	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
++	u64 pte = readl((u32 __iomem *)ggtt->gsm + (offset >> PAGE_SHIFT));
++
++	/* Decode as i830_read_entry/i965_read_entry in the donor intel-gtt.c. */
++	*is_present = pte & BIT(0);
++	*is_local = false;
++	if (GRAPHICS_VER(vm->i915) >= 4)
++		return ((pte & 0xf0) << 28) | (pte & ~0xfffULL);
++	return pte & ~0xfffULL;
++#else
+ 	return intel_gmch_gtt_read_entry(offset >> PAGE_SHIFT,
+ 					 is_present, is_local);
++#endif
+ }
+ 
+ static void gmch_ggtt_insert_entries(struct i915_address_space *vm,
+@@ -59,6 +71,9 @@
+ 
+ static void gmch_ggtt_remove(struct i915_address_space *vm)
+ {
++#if !IS_ENABLED(CPTCFG_INTEL_GTT_BACKPORT) && defined(BPM_INTEL_GMCH_GTT_READ_ENTRY_NOT_PRESENT)
++	iounmap(i915_vm_to_ggtt(vm)->gsm);
++#endif
+ 	intel_gmch_remove();
+ }
+ 
+@@ -85,6 +100,10 @@
+ {
+ 	struct drm_i915_private *i915 = ggtt->vm.i915;
+ 	phys_addr_t gmadr_base;
++#if !IS_ENABLED(CPTCFG_INTEL_GTT_BACKPORT) && defined(BPM_INTEL_GMCH_GTT_READ_ENTRY_NOT_PRESENT)
++	struct pci_dev *pdev = to_pci_dev(i915->drm.dev);
++	phys_addr_t pte_base;
++#endif
+ 	int ret;
+ 
+ 	ret = intel_gmch_probe(i915->gmch.pdev, to_pci_dev(i915->drm.dev), NULL);
+@@ -94,6 +113,32 @@
+ 	}
+ 
+ 	intel_gmch_gtt_get(&ggtt->vm.total, &gmadr_base, &ggtt->mappable_end);
++
++#if !IS_ENABLED(CPTCFG_INTEL_GTT_BACKPORT) && defined(BPM_INTEL_GMCH_GTT_READ_ENTRY_NOT_PRESENT)
++	/* The builtin GTT driver has no read-entry API. Map its PTE aperture
++	 * read-only in use, using the same BAR offsets as donor intel-gtt.c.
++	 */
++	switch (GRAPHICS_VER(i915)) {
++	case 2:
++		pte_base = pci_resource_start(pdev, 1) + 0x10000;
++		break;
++	case 3:
++		pte_base = pci_resource_start(pdev, 3);
++		break;
++	case 5:
++		pte_base = pci_resource_start(pdev, 0) + SZ_2M;
++		break;
++	default:
++		pte_base = pci_resource_start(pdev, 0) + SZ_512K;
++		break;
++	}
++	ggtt->gsm = ioremap(pte_base, (ggtt->vm.total >> PAGE_SHIFT) * sizeof(u32));
++	if (!ggtt->gsm) {
++		intel_gmch_remove();
++		return -ENOMEM;
++	}
++
++#endif
+ 
+ 	ggtt->gmadr = DEFINE_RES_MEM(gmadr_base, ggtt->mappable_end);
+ 

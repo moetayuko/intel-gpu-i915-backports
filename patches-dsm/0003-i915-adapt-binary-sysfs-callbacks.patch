@@ -1,0 +1,42 @@
+Subject: [PATCH] i915: adapt binary sysfs callbacks to 5.10
+
+--- a/drivers/gpu/drm/i915/i915_sysfs.c
++++ b/drivers/gpu/drm/i915/i915_sysfs.c
+@@ -61,7 +61,7 @@
+ 
+ static ssize_t
+ i915_l3_read(struct file *filp, struct kobject *kobj,
+-	     const struct bin_attribute *attr, char *buf,
++	     struct bin_attribute *attr, char *buf,
+ 	     loff_t offset, size_t count)
+ {
+ 	struct device *kdev = kobj_to_dev(kobj);
+@@ -89,7 +89,7 @@
+ 
+ static ssize_t
+ i915_l3_write(struct file *filp, struct kobject *kobj,
+-	      const struct bin_attribute *attr, char *buf,
++	      struct bin_attribute *attr, char *buf,
+ 	      loff_t offset, size_t count)
+ {
+ 	struct device *kdev = kobj_to_dev(kobj);
+--- a/drivers/gpu/drm/i915/i915_gpu_error.c
++++ b/drivers/gpu/drm/i915/i915_gpu_error.c
+@@ -2572,7 +2572,7 @@
+ }
+ 
+ static ssize_t error_state_read(struct file *filp, struct kobject *kobj,
+-				const struct bin_attribute *attr, char *buf,
++				struct bin_attribute *attr, char *buf,
+ 				loff_t off, size_t count)
+ {
+ 
+@@ -2608,7 +2608,7 @@
+ }
+ 
+ static ssize_t error_state_write(struct file *file, struct kobject *kobj,
+-				 const struct bin_attribute *attr, char *buf,
++				 struct bin_attribute *attr, char *buf,
+ 				 loff_t off, size_t count)
+ {
+ 	struct device *kdev = kobj_to_dev(kobj);

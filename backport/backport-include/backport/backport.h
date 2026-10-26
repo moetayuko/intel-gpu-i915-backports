@@ -10,6 +10,8 @@
 
 #ifndef __ASSEMBLY__
 #define LINUX_BACKPORT(__sym) backport_ ##__sym
+#define LINUX_I915_BACKPORT(__sym) i915bkpt_ ##__sym
+#define LINUX_DMABUF_BACKPORT(__sym) dmabufbkpt_ ##__sym
 #endif
 
 #endif /* __BACKPORT_H */

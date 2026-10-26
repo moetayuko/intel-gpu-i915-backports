@@ -1,0 +1,54 @@
+Subject: [PATCH] drm: retain unsigned file offsets on 5.10
+
+--- a/drivers/gpu/drm/i915/i915_driver.c
++++ b/drivers/gpu/drm/i915/i915_driver.c
+@@ -1798,7 +1798,6 @@
+ #ifdef CONFIG_PROC_FS
+ 	.show_fdinfo = drm_show_fdinfo,
+ #endif
+-	.fop_flags = FOP_UNSIGNED_OFFSET,
+ };
+ 
+ static int
+--- a/dsm/include/drm/drm_gem.h
++++ b/dsm/include/drm/drm_gem.h
+@@ -470,7 +470,6 @@
+ 	.read		= drm_read,\
+ 	.llseek		= noop_llseek,\
+ 	.mmap		= drm_gem_mmap, \
+-	.fop_flags	= FOP_UNSIGNED_OFFSET
+ 
+ /**
+  * DEFINE_DRM_GEM_FOPS() - macro to generate file operations for GEM drivers
+--- a/dsm/include/drm/drm_gem_dma_helper.h
++++ b/dsm/include/drm/drm_gem_dma_helper.h
+@@ -267,7 +267,6 @@
+ 		.read		= drm_read,\
+ 		.llseek		= noop_llseek,\
+ 		.mmap		= drm_gem_mmap,\
+-		.fop_flags = FOP_UNSIGNED_OFFSET, \
+ 		DRM_GEM_DMA_UNMAPPED_AREA_FOPS \
+ 	}
+ 
+--- a/dsm/include/drm/drm_accel.h
++++ b/dsm/include/drm/drm_accel.h
+@@ -29,7 +29,6 @@
+ 	.read		= drm_read,\
+ 	.llseek		= noop_llseek, \
+ 	.mmap		= drm_gem_mmap, \
+-	.fop_flags	= FOP_UNSIGNED_OFFSET
+ 
+ /**
+  * DEFINE_DRM_ACCEL_FOPS() - macro to generate file operations for accelerators drivers
+--- a/drivers/gpu/drm/drm_file.c
++++ b/drivers/gpu/drm/drm_file.c
+@@ -326,8 +326,7 @@
+ 	if (dev->switch_power_state != DRM_SWITCH_POWER_ON &&
+ 	    dev->switch_power_state != DRM_SWITCH_POWER_DYNAMIC_OFF)
+ 		return -EINVAL;
+-	if (WARN_ON_ONCE(!(filp->f_op->fop_flags & FOP_UNSIGNED_OFFSET)))
+-		return -EINVAL;
++	filp->f_mode |= FMODE_UNSIGNED_OFFSET;
+ 
+ 	drm_dbg_core(dev, "comm=\"%s\", pid=%d, minor=%d\n",
+ 		     current->comm, task_pid_nr(current), minor->index);

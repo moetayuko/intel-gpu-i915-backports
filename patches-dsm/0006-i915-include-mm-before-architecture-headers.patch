@@ -1,0 +1,12 @@
+Subject: [PATCH] i915: include mm before architecture headers on 5.10
+
+--- a/drivers/gpu/drm/i915/gt/intel_ggtt.c
++++ b/drivers/gpu/drm/i915/gt/intel_ggtt.c
+@@ -3,6 +3,7 @@
+  * Copyright © 2020 Intel Corporation
+  */
+ 
++#include <linux/mm.h>
+ #include <asm/set_memory.h>
+ #include <asm/smp.h>
+ #include <linux/types.h>

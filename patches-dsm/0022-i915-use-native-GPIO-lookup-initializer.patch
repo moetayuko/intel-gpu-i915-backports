@@ -1,0 +1,11 @@
+--- a/drivers/gpu/drm/i915/display/intel_dsi_vbt.c
++++ b/drivers/gpu/drm/i915/display/intel_dsi_vbt.c
+@@ -226,7 +226,7 @@
+ 
+ 	lookup->dev_id = "0000:00:02.0";
+ 	lookup->table[0] =
+-		GPIO_LOOKUP_IDX(chip, idx, con_id, idx, GPIO_ACTIVE_HIGH);
++		(struct gpiod_lookup)GPIO_LOOKUP_IDX(chip, idx, con_id, idx, GPIO_ACTIVE_HIGH);
+ 
+ 	gpiod_add_lookup_table(lookup);
+ 

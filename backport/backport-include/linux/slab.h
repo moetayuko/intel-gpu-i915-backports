@@ -4,6 +4,18 @@
 
 #include_next <linux/slab.h>
 #include <linux/module.h>
+#include <linux/overflow.h>
+
+#ifdef BPM_KREALLOC_ARRAY_NOT_PRESENT
+static inline void *krealloc_array(void *p, size_t n, size_t size, gfp_t flags)
+{
+	size_t bytes;
+
+	if (check_mul_overflow(n, size, &bytes))
+		return NULL;
+	return krealloc(p, bytes, flags);
+}
+#endif
 
 #ifdef BPM_KVREALLOC_OLDSIZE_PARAM_PRESENT
 #ifndef BPM_KVREALLOC_NOPROF_PRESENT

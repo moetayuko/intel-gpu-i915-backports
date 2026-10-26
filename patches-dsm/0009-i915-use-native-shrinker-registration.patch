@@ -1,0 +1,70 @@
+--- a/drivers/gpu/drm/i915/gem/i915_gem_shrinker.c
++++ b/drivers/gpu/drm/i915/gem/i915_gem_shrinker.c
+@@ -284,10 +284,15 @@
+ 	return freed;
+ }
+ 
++struct i915_dsm_shrinker {
++	struct shrinker base;
++	struct drm_i915_private *i915;
++};
++
+ static unsigned long
+ i915_gem_shrinker_count(struct shrinker *shrinker, struct shrink_control *sc)
+ {
+-	struct drm_i915_private *i915 = shrinker->private_data;
++	struct drm_i915_private *i915 = container_of(shrinker, struct i915_dsm_shrinker, base)->i915;
+ 	unsigned long num_objects;
+ 	unsigned long count;
+ 
+@@ -315,7 +320,7 @@
+ static unsigned long
+ i915_gem_shrinker_scan(struct shrinker *shrinker, struct shrink_control *sc)
+ {
+-	struct drm_i915_private *i915 = shrinker->private_data;
++	struct drm_i915_private *i915 = container_of(shrinker, struct i915_dsm_shrinker, base)->i915;
+ 	unsigned long freed;
+ 
+ 	sc->nr_scanned = 0;
+@@ -427,16 +432,24 @@
+ 
+ void i915_gem_driver_register__shrinker(struct drm_i915_private *i915)
+ {
+-	i915->mm.shrinker = shrinker_alloc(0, "drm-i915_gem");
++	struct i915_dsm_shrinker *priv;
++
++	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
++	i915->mm.shrinker = priv ? &priv->base : NULL;
+ 	if (!i915->mm.shrinker) {
+ 		drm_WARN_ON(&i915->drm, 1);
+ 	} else {
+ 		i915->mm.shrinker->scan_objects = i915_gem_shrinker_scan;
+ 		i915->mm.shrinker->count_objects = i915_gem_shrinker_count;
+ 		i915->mm.shrinker->batch = 4096;
+-		i915->mm.shrinker->private_data = i915;
+-
+-		shrinker_register(i915->mm.shrinker);
++		priv->i915 = i915;
++		i915->mm.shrinker->seeks = DEFAULT_SEEKS;
++
++		if ((register_shrinker)(i915->mm.shrinker)) {
++			drm_warn(&i915->drm, "Failed to register GEM shrinker\n");
++			kfree(priv);
++			i915->mm.shrinker = NULL;
++		}
+ 	}
+ 
+ 	i915->mm.oom_notifier.notifier_call = i915_gem_shrinker_oom;
+@@ -453,7 +466,11 @@
+ 		    unregister_vmap_purge_notifier(&i915->mm.vmap_notifier));
+ 	drm_WARN_ON(&i915->drm,
+ 		    unregister_oom_notifier(&i915->mm.oom_notifier));
+-	shrinker_free(i915->mm.shrinker);
++	if (i915->mm.shrinker) {
++		unregister_shrinker(i915->mm.shrinker);
++		kfree(container_of(i915->mm.shrinker, struct i915_dsm_shrinker, base));
++		i915->mm.shrinker = NULL;
++	}
+ }
+ 
+ void i915_gem_shrinker_taints_mutex(struct drm_i915_private *i915,

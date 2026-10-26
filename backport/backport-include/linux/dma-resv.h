@@ -3,6 +3,10 @@
 
 #include_next <linux/dma-resv.h>
 
+#ifdef BPM_DMA_RESV_SHARED_LIST_NOT_PRESENT
+#define dma_resv_shared_list dma_resv_get_list
+#endif
+
 #ifdef BPM_DMA_RESV_USAGE_NOT_PRESENT
 enum dma_resv_usage {
 	DMA_RESV_USAGE_KERNEL,

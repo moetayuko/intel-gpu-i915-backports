@@ -1,0 +1,536 @@
+Subject: [PATCH] dma-buf: build a private core on DSM 5.10
+
+--- a/dsm/dma-buf/dma-buf.c
++++ b/dsm/dma-buf/dma-buf.c
+@@ -80,7 +80,7 @@
+ 	 */
+ 	mutex_lock(&dmabuf_list_mutex);
+ 	list_for_each_entry(dmabuf, &dmabuf_list, list_node) {
+-		if (file_ref_get(&dmabuf->file->f_ref)) {
++		if (atomic_long_inc_not_zero(&dmabuf->file->f_count)) {
+ 			ret = dmabuf;
+ 			break;
+ 		}
+@@ -114,13 +114,30 @@
+ 	mutex_lock(&dmabuf_list_mutex);
+ 	dma_buf_put(dmabuf);
+ 	list_for_each_entry_continue(dmabuf, &dmabuf_list, list_node) {
+-		if (file_ref_get(&dmabuf->file->f_ref)) {
++		if (atomic_long_inc_not_zero(&dmabuf->file->f_count)) {
+ 			ret = dmabuf;
+ 			break;
+ 		}
+ 	}
+ 	mutex_unlock(&dmabuf_list_mutex);
+ 	return ret;
++}
++
++static char *dmabuf_dynamic_dname(char *buffer, int buflen, const char *fmt, ...)
++{
++	va_list args;
++	char temp[64];
++	int sz;
++
++	va_start(args, fmt);
++	sz = vsnprintf(temp, sizeof(temp), fmt, args) + 1;
++	va_end(args);
++
++	if (sz > sizeof(temp) || sz > buflen)
++		return ERR_PTR(-ENAMETOOLONG);
++
++	buffer += buflen - sz;
++	return memcpy(buffer, temp, sz);
+ }
+ 
+ static char *dmabuffs_dname(struct dentry *dentry, char *buffer, int buflen)
+@@ -135,7 +152,7 @@
+ 		ret = strscpy(name, dmabuf->name, sizeof(name));
+ 	spin_unlock(&dmabuf->name_lock);
+ 
+-	return dynamic_dname(buffer, buflen, "/%s:%s",
++	return dmabuf_dynamic_dname(buffer, buflen, "/%s:%s",
+ 			     dentry->d_name.name, ret > 0 ? name : "");
+ }
+ 
+@@ -197,7 +214,7 @@
+ }
+ 
+ static struct file_system_type dma_buf_fs_type = {
+-	.name = "dmabuf",
++	.name = "i915-dmabuf",
+ 	.init_fs_context = dma_buf_fs_init_context,
+ 	.kill_sb = kill_anon_super,
+ };
+@@ -757,7 +774,7 @@
+ 	module_put(exp_info->owner);
+ 	return ERR_PTR(ret);
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_export, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_export);
+ 
+ /**
+  * dma_buf_fd - returns a file descriptor for the given struct dma_buf
+@@ -781,7 +798,7 @@
+ 
+ 	return fd;
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_fd, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_fd);
+ 
+ /**
+  * dma_buf_get - returns the struct dma_buf related to an fd
+@@ -807,7 +824,7 @@
+ 
+ 	return file->private_data;
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_get, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_get);
+ 
+ /**
+  * dma_buf_put - decreases refcount of the buffer
+@@ -826,7 +843,7 @@
+ 
+ 	fput(dmabuf->file);
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_put, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_put);
+ 
+ static void mangle_sg_table(struct sg_table *sg_table)
+ {
+@@ -985,7 +1002,7 @@
+ 	kfree(attach);
+ 	return ERR_PTR(ret);
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_dynamic_attach, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_dynamic_attach);
+ 
+ /**
+  * dma_buf_attach - Wrapper for dma_buf_dynamic_attach
+@@ -1000,7 +1017,7 @@
+ {
+ 	return dma_buf_dynamic_attach(dmabuf, dev, NULL, NULL);
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_attach, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_attach);
+ 
+ /**
+  * dma_buf_detach - Remove the given attachment from dmabuf's attachments list
+@@ -1025,7 +1042,7 @@
+ 
+ 	kfree(attach);
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_detach, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_detach);
+ 
+ /**
+  * dma_buf_pin - Lock down the DMA-buf
+@@ -1055,7 +1072,7 @@
+ 
+ 	return ret;
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_pin, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_pin);
+ 
+ /**
+  * dma_buf_unpin - Unpin a DMA-buf
+@@ -1076,7 +1093,7 @@
+ 	if (dmabuf->ops->unpin)
+ 		dmabuf->ops->unpin(attach);
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_unpin, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_unpin);
+ 
+ /**
+  * dma_buf_map_attachment - Returns the scatterlist table of the attachment;
+@@ -1170,7 +1187,7 @@
+ 
+ 	return sg_table;
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_map_attachment, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_map_attachment);
+ 
+ /**
+  * dma_buf_map_attachment_unlocked - Returns the scatterlist table of the attachment;
+@@ -1198,7 +1215,7 @@
+ 
+ 	return sg_table;
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_map_attachment_unlocked, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_map_attachment_unlocked);
+ 
+ /**
+  * dma_buf_unmap_attachment - unmaps and decreases usecount of the buffer;might
+@@ -1227,7 +1244,7 @@
+ 	if (dma_buf_pin_on_map(attach))
+ 		attach->dmabuf->ops->unpin(attach);
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_unmap_attachment, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_unmap_attachment);
+ 
+ /**
+  * dma_buf_unmap_attachment_unlocked - unmaps and decreases usecount of the buffer;might
+@@ -1252,7 +1269,7 @@
+ 	dma_buf_unmap_attachment(attach, sg_table, direction);
+ 	dma_resv_unlock(attach->dmabuf->resv);
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_unmap_attachment_unlocked, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_unmap_attachment_unlocked);
+ 
+ /**
+  * dma_buf_move_notify - notify attachments that DMA-buf is moving
+@@ -1272,7 +1289,7 @@
+ 		if (attach->importer_ops)
+ 			attach->importer_ops->move_notify(attach);
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_move_notify, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_move_notify);
+ 
+ /**
+  * DOC: cpu access
+@@ -1420,7 +1437,7 @@
+ 
+ 	return ret;
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_begin_cpu_access, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_begin_cpu_access);
+ 
+ /**
+  * dma_buf_end_cpu_access - Must be called after accessing a dma_buf from the
+@@ -1448,7 +1465,7 @@
+ 
+ 	return ret;
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_end_cpu_access, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_end_cpu_access);
+ 
+ 
+ /**
+@@ -1490,7 +1507,7 @@
+ 
+ 	return dmabuf->ops->mmap(dmabuf, vma);
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_mmap, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_mmap);
+ 
+ /**
+  * dma_buf_vmap - Create virtual mapping for the buffer object into kernel
+@@ -1543,7 +1560,7 @@
+ 
+ 	return 0;
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_vmap, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_vmap);
+ 
+ /**
+  * dma_buf_vmap_unlocked - Create virtual mapping for the buffer object into kernel
+@@ -1570,7 +1587,7 @@
+ 
+ 	return ret;
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_vmap_unlocked, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_vmap_unlocked);
+ 
+ /**
+  * dma_buf_vunmap - Unmap a vmap obtained by dma_buf_vmap.
+@@ -1594,7 +1611,7 @@
+ 		iosys_map_clear(&dmabuf->vmap_ptr);
+ 	}
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_vunmap, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_vunmap);
+ 
+ /**
+  * dma_buf_vunmap_unlocked - Unmap a vmap obtained by dma_buf_vmap.
+@@ -1610,7 +1627,7 @@
+ 	dma_buf_vunmap(dmabuf, map);
+ 	dma_resv_unlock(dmabuf->resv);
+ }
+-EXPORT_SYMBOL_NS_GPL(dma_buf_vunmap_unlocked, "DMA_BUF");
++EXPORT_SYMBOL_GPL(dma_buf_vunmap_unlocked);
+ 
+ #ifdef CONFIG_DEBUG_FS
+ static int dma_buf_debug_show(struct seq_file *s, void *unused)
+@@ -1684,7 +1701,7 @@
+ 	struct dentry *d;
+ 	int err = 0;
+ 
+-	d = debugfs_create_dir("dma_buf", NULL);
++	d = debugfs_create_dir("i915_dma_buf", NULL);
+ 	if (IS_ERR(d))
+ 		return PTR_ERR(d);
+ 
+@@ -1702,10 +1719,6 @@
+ 	return err;
+ }
+ 
+-static void dma_buf_uninit_debugfs(void)
+-{
+-	debugfs_remove_recursive(dma_buf_debugfs_dir);
+-}
+ #else
+ static inline int dma_buf_init_debugfs(void)
+ {
+@@ -1733,10 +1746,10 @@
+ }
+ subsys_initcall(dma_buf_init);
+ 
+-static void __exit dma_buf_deinit(void)
+-{
+-	dma_buf_uninit_debugfs();
+-	kern_unmount(dma_buf_mnt);
+-	dma_buf_uninit_sysfs_statistics();
+-}
+-__exitcall(dma_buf_deinit);
++/* Like the built-in core, this module has boot lifetime. DMA-BUF dentries
++ * and fence callbacks may survive the last importer. Do not offer an unload
++ * path until those lifetimes can be drained independently of client modules.
++ */
++
++MODULE_DESCRIPTION("Intel i915 private DMA-BUF core");
++MODULE_LICENSE("GPL");
+--- a/dsm/dma-buf/dma-resv.c
++++ b/dsm/dma-buf/dma-resv.c
+@@ -100,14 +100,14 @@
+ 	struct dma_resv_list *list;
+ 	size_t size;
+ 
+-	/* Round up to the next kmalloc bucket size. */
+-	size = kmalloc_size_roundup(struct_size(list, table, max_fences));
++	/* 5.10 has no kmalloc_size_roundup(); reserve exactly the requested slots. */
++	size = struct_size(list, table, max_fences);
+ 
+ 	list = kmalloc(size, GFP_KERNEL);
+ 	if (!list)
+ 		return NULL;
+ 
+-	/* Given the resulting bucket size, recalculated max_fences. */
++	/* Record capacity from the requested allocation size. */
+ 	list->max_fences = (size - offsetof(typeof(*list), table)) /
+ 		sizeof(*list->table);
+ 
+--- a/dsm/dma-buf/dma-fence.c
++++ b/dsm/dma-buf/dma-fence.c
+@@ -20,9 +20,9 @@
+ #define CREATE_TRACE_POINTS
+ #include <trace/events/dma_fence.h>
+ 
+-EXPORT_TRACEPOINT_SYMBOL(dma_fence_emit);
+-EXPORT_TRACEPOINT_SYMBOL(dma_fence_enable_signal);
+-EXPORT_TRACEPOINT_SYMBOL(dma_fence_signaled);
++EXPORT_TRACEPOINT_SYMBOL(i915_dma_fence_emit);
++EXPORT_TRACEPOINT_SYMBOL(i915_dma_fence_enable_signal);
++EXPORT_TRACEPOINT_SYMBOL(i915_dma_fence_signaled);
+ 
+ static DEFINE_SPINLOCK(dma_fence_stub_lock);
+ static struct dma_fence dma_fence_stub;
+@@ -381,7 +381,7 @@
+ 
+ 	fence->timestamp = timestamp;
+ 	set_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT, &fence->flags);
+-	trace_dma_fence_signaled(fence);
++	trace_i915_dma_fence_signaled(fence);
+ 
+ 	list_for_each_entry_safe(cur, tmp, &cb_list, node) {
+ 		INIT_LIST_HEAD(&cur->node);
+@@ -511,18 +511,18 @@
+ 
+ 	dma_fence_enable_sw_signaling(fence);
+ 
+-	if (trace_dma_fence_wait_start_enabled()) {
++	if (trace_i915_dma_fence_wait_start_enabled()) {
+ 		rcu_read_lock();
+-		trace_dma_fence_wait_start(fence);
++		trace_i915_dma_fence_wait_start(fence);
+ 		rcu_read_unlock();
+ 	}
+ 	if (fence->ops->wait)
+ 		ret = fence->ops->wait(fence, intr, timeout);
+ 	else
+ 		ret = dma_fence_default_wait(fence, intr, timeout);
+-	if (trace_dma_fence_wait_end_enabled()) {
++	if (trace_i915_dma_fence_wait_end_enabled()) {
+ 		rcu_read_lock();
+-		trace_dma_fence_wait_end(fence);
++		trace_i915_dma_fence_wait_end(fence);
+ 		rcu_read_unlock();
+ 	}
+ 	return ret;
+@@ -542,7 +542,7 @@
+ 		container_of(kref, struct dma_fence, refcount);
+ 
+ 	rcu_read_lock();
+-	trace_dma_fence_destroy(fence);
++	trace_i915_dma_fence_destroy(fence);
+ 
+ 	if (!list_empty(&fence->cb_list) &&
+ 	    !test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
+@@ -606,7 +606,7 @@
+ 		return false;
+ 
+ 	if (!was_set && fence->ops->enable_signaling) {
+-		trace_dma_fence_enable_signal(fence);
++		trace_i915_dma_fence_enable_signal(fence);
+ 
+ 		if (!fence->ops->enable_signaling(fence)) {
+ 			dma_fence_signal_locked(fence);
+@@ -759,7 +759,7 @@
+ 	struct default_wait_cb *wait =
+ 		container_of(cb, struct default_wait_cb, base);
+ 
+-	wake_up_state(wait->task, TASK_NORMAL);
++	wake_up_process(wait->task);
+ }
+ 
+ /**
+@@ -1033,7 +1033,7 @@
+ 	fence->flags = flags;
+ 	fence->error = 0;
+ 
+-	trace_dma_fence_init(fence);
++	trace_i915_dma_fence_init(fence);
+ }
+ 
+ /**
+--- a/dsm/dma-buf/dma-fence-chain.c
++++ b/dsm/dma-buf/dma-fence-chain.c
+@@ -62,7 +62,7 @@
+ 			replacement = NULL;
+ 		}
+ 
+-		tmp = unrcu_pointer(cmpxchg(&chain->prev, RCU_INITIALIZER(prev),
++		tmp = rcu_pointer_handoff(cmpxchg(&chain->prev, RCU_INITIALIZER(prev),
+ 					     RCU_INITIALIZER(replacement)));
+ 		if (tmp == prev)
+ 			dma_fence_put(tmp);
+--- a/dsm/dma-buf/sync_file.c
++++ b/dsm/dma-buf/sync_file.c
+@@ -7,6 +7,7 @@
+ 
+ #include <linux/dma-fence-unwrap.h>
+ #include <linux/export.h>
++#include <linux/module.h>
+ #include <linux/file.h>
+ #include <linux/fs.h>
+ #include <linux/kernel.h>
+@@ -400,6 +401,7 @@
+ }
+ 
+ static const struct file_operations sync_file_fops = {
++	.owner = THIS_MODULE,
+ 	.release = sync_file_release,
+ 	.poll = sync_file_poll,
+ 	.unlocked_ioctl = sync_file_ioctl,
+--- a/dsm/include/trace/events/dma_fence.h
++++ b/dsm/include/trace/events/dma_fence.h
+@@ -1,6 +1,6 @@
+ /* SPDX-License-Identifier: GPL-2.0 */
+ #undef TRACE_SYSTEM
+-#define TRACE_SYSTEM dma_fence
++#define TRACE_SYSTEM i915_dma_fence
+ 
+ #if !defined(_TRACE_DMA_FENCE_H) || defined(TRACE_HEADER_MULTI_READ)
+ #define _TRACE_DMA_FENCE_H
+@@ -9,7 +9,7 @@
+ 
+ struct dma_fence;
+ 
+-DECLARE_EVENT_CLASS(dma_fence,
++DECLARE_EVENT_CLASS(i915_dma_fence,
+ 
+ 	TP_PROTO(struct dma_fence *fence),
+ 
+@@ -23,8 +23,8 @@
+ 	),
+ 
+ 	TP_fast_assign(
+-		__assign_str(driver);
+-		__assign_str(timeline);
++		__assign_str(driver, dma_fence_driver_name(fence));
++		__assign_str(timeline, dma_fence_timeline_name(fence));
+ 		__entry->context = fence->context;
+ 		__entry->seqno = fence->seqno;
+ 	),
+@@ -39,7 +39,7 @@
+  * signaling,holding the fence->lock and having checked for not signaled, or the
+  * signaling path itself.
+  */
+-DECLARE_EVENT_CLASS(dma_fence_unsignaled,
++DECLARE_EVENT_CLASS(i915_dma_fence_unsignaled,
+ 
+ 	TP_PROTO(struct dma_fence *fence),
+ 
+@@ -53,8 +53,8 @@
+ 	),
+ 
+ 	TP_fast_assign(
+-		__assign_str(driver);
+-		__assign_str(timeline);
++		__assign_str(driver, fence->ops->get_driver_name(fence));
++		__assign_str(timeline, fence->ops->get_timeline_name(fence));
+ 		__entry->context = fence->context;
+ 		__entry->seqno = fence->seqno;
+ 	),
+@@ -64,49 +64,49 @@
+ 		  __entry->seqno)
+ );
+ 
+-DEFINE_EVENT(dma_fence_unsignaled, dma_fence_emit,
++DEFINE_EVENT(i915_dma_fence_unsignaled, i915_dma_fence_emit,
+ 
+ 	TP_PROTO(struct dma_fence *fence),
+ 
+ 	TP_ARGS(fence)
+ );
+ 
+-DEFINE_EVENT(dma_fence_unsignaled, dma_fence_init,
++DEFINE_EVENT(i915_dma_fence_unsignaled, i915_dma_fence_init,
+ 
+ 	TP_PROTO(struct dma_fence *fence),
+ 
+ 	TP_ARGS(fence)
+ );
+ 
+-DEFINE_EVENT(dma_fence, dma_fence_destroy,
++DEFINE_EVENT(i915_dma_fence, i915_dma_fence_destroy,
+ 
+ 	TP_PROTO(struct dma_fence *fence),
+ 
+ 	TP_ARGS(fence)
+ );
+ 
+-DEFINE_EVENT(dma_fence_unsignaled, dma_fence_enable_signal,
++DEFINE_EVENT(i915_dma_fence_unsignaled, i915_dma_fence_enable_signal,
+ 
+ 	TP_PROTO(struct dma_fence *fence),
+ 
+ 	TP_ARGS(fence)
+ );
+ 
+-DEFINE_EVENT(dma_fence_unsignaled, dma_fence_signaled,
++DEFINE_EVENT(i915_dma_fence_unsignaled, i915_dma_fence_signaled,
+ 
+ 	TP_PROTO(struct dma_fence *fence),
+ 
+ 	TP_ARGS(fence)
+ );
+ 
+-DEFINE_EVENT(dma_fence, dma_fence_wait_start,
++DEFINE_EVENT(i915_dma_fence, i915_dma_fence_wait_start,
+ 
+ 	TP_PROTO(struct dma_fence *fence),
+ 
+ 	TP_ARGS(fence)
+ );
+ 
+-DEFINE_EVENT(dma_fence, dma_fence_wait_end,
++DEFINE_EVENT(i915_dma_fence, i915_dma_fence_wait_end,
+ 
+ 	TP_PROTO(struct dma_fence *fence),
+ 
+@@ -116,4 +116,6 @@
+ #endif /*  _TRACE_DMA_FENCE_H */
+ 
+ /* This part must be outside protection */
++#undef TRACE_INCLUDE_FILE
++#define TRACE_INCLUDE_FILE dma_fence
+ #include <trace/define_trace.h>

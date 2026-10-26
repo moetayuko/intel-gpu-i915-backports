@@ -1,0 +1,90 @@
+--- a/drivers/gpu/drm/i915/gem/i915_gem_shmem.c
++++ b/drivers/gpu/drm/i915/gem/i915_gem_shmem.c
+@@ -34,7 +34,6 @@
+ {
+ 	struct sgt_iter sgt_iter;
+ 	struct folio_batch fbatch;
+-	struct folio *last = NULL;
+ 	struct page *page;
+ 
+ 	mapping_clear_unevictable(mapping);
+@@ -42,16 +41,12 @@
+ 	folio_batch_init(&fbatch);
+ 	for_each_sgt_page(page, sgt_iter, st) {
+ 		struct folio *folio = page_folio(page);
+-
+-		if (folio == last)
+-			continue;
+-		last = folio;
+ 		if (dirty)
+ 			folio_mark_dirty(folio);
+ 		if (backup)
+ 			folio_mark_accessed(folio);
+ 
+-		if (!folio_batch_add(&fbatch, folio))
++		if (!folio_batch_add(&fbatch, (struct folio *)page))
+ 			check_release_folio_batch(&fbatch);
+ 	}
+ 	if (fbatch.nr)
+@@ -99,8 +94,7 @@
+ 	sg = st->sgl;
+ 	st->nents = 0;
+ 	for (i = 0; i < page_count; i++) {
+-		struct folio *folio;
+-		unsigned long nr_pages;
++		struct page *page;
+ 		const unsigned int shrink[] = {
+ 			I915_SHRINK_BOUND | I915_SHRINK_UNBOUND,
+ 			0,
+@@ -109,12 +103,12 @@
+ 
+ 		do {
+ 			cond_resched();
+-			folio = shmem_read_folio_gfp(mapping, i, gfp);
+-			if (!IS_ERR(folio))
++			page = shmem_read_mapping_page_gfp(mapping, i, gfp);
++			if (!IS_ERR(page))
+ 				break;
+ 
+ 			if (!*s) {
+-				ret = PTR_ERR(folio);
++				ret = PTR_ERR(page);
+ 				goto err_sg;
+ 			}
+ 
+@@ -151,28 +145,22 @@
+ 			}
+ 		} while (1);
+ 
+-		nr_pages = min_array(((unsigned long[]) {
+-					folio_nr_pages(folio),
+-					page_count - i,
+-					max_segment / PAGE_SIZE,
+-				      }), 3);
++		/* Native shmem returns one reference per requested page, including
++		 * THP tails. Keep that accounting when segment limits split a THP.
++		 */
+ 
+ 		if (!i ||
+ 		    sg->length >= max_segment ||
+-		    folio_pfn(folio) != next_pfn) {
++		    page_to_pfn(page) != next_pfn) {
+ 			if (i)
+ 				sg = sg_next(sg);
+ 
+ 			st->nents++;
+-			sg_set_folio(sg, folio, nr_pages * PAGE_SIZE, 0);
++			sg_set_page(sg, page, PAGE_SIZE, 0);
+ 		} else {
+-			nr_pages = min_t(unsigned long, nr_pages,
+-					 (max_segment - sg->length) / PAGE_SIZE);
+-
+-			sg->length += nr_pages * PAGE_SIZE;
++			sg->length += PAGE_SIZE;
+ 		}
+-		next_pfn = folio_pfn(folio) + nr_pages;
+-		i += nr_pages - 1;
++		next_pfn = page_to_pfn(page) + 1;
+ 
+ 		/* Check that the i965g/gm workaround works. */
+ 		GEM_BUG_ON(gfp & __GFP_DMA32 && next_pfn >= 0x00100000UL);

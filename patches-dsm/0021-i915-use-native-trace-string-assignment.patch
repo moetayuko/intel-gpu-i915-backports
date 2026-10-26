@@ -1,0 +1,261 @@
+--- a/drivers/gpu/drm/i915/display/intel_display_trace.h
++++ b/drivers/gpu/drm/i915/display/intel_display_trace.h
+@@ -83,7 +83,7 @@
+ 	    TP_fast_assign(
+ 			   struct intel_display *display = to_intel_display(crtc);
+ 			   struct intel_crtc *it__;
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   memset(__entry->frame, 0,
+ 				  sizeof(__entry->frame[0]) * I915_MAX_PIPES);
+ 			   memset(__entry->scanline, 0,
+@@ -113,7 +113,7 @@
+ 	    TP_fast_assign(
+ 			   struct intel_display *display = to_intel_display(crtc);
+ 			   struct intel_crtc *it__;
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   memset(__entry->frame, 0,
+ 				  sizeof(__entry->frame[0]) * I915_MAX_PIPES);
+ 			   memset(__entry->scanline, 0,
+@@ -141,7 +141,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -165,7 +165,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -193,7 +193,7 @@
+ 
+ 	    TP_fast_assign(
+ 			   struct intel_crtc *crtc = intel_crtc_for_pipe(display, pipe);
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_display(display));
+ 			   __entry->pipe_name = pipe_name(pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -218,7 +218,7 @@
+ 	    TP_fast_assign(
+ 			   enum pipe pipe = pch_transcoder;
+ 			   struct intel_crtc *crtc = intel_crtc_for_pipe(display, pipe);
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_display(display));
+ 			   __entry->pipe_name = pipe_name(pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -243,7 +243,7 @@
+ 
+ 	    TP_fast_assign(
+ 			   struct intel_crtc *crtc;
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_display(display));
+ 			   memset(__entry->frame, 0,
+ 				  sizeof(__entry->frame[0]) * I915_MAX_PIPES);
+ 			   memset(__entry->scanline, 0,
+@@ -285,7 +285,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -332,7 +332,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -369,7 +369,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -398,8 +398,8 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
+-			   __assign_str(name);
++			   __assign_str(dev, __dev_name_kms(plane));
++			   __assign_str(name, plane->base.name);
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -427,8 +427,8 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
+-			   __assign_str(name);
++			   __assign_str(dev, __dev_name_drm(plane_state->uapi.plane));
++			   __assign_str(name, plane_state->uapi.plane->name);
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -460,8 +460,8 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
+-			   __assign_str(name);
++			   __assign_str(dev, __dev_name_drm(plane_state->uapi.plane));
++			   __assign_str(name, plane_state->uapi.plane->name);
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -490,8 +490,8 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
+-			   __assign_str(name);
++			   __assign_str(dev, __dev_name_kms(plane));
++			   __assign_str(name, plane->base.name);
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -523,8 +523,8 @@
+ 	    TP_fast_assign(
+ 			   struct intel_display *display = to_intel_display(plane);
+ 			   struct intel_crtc *crtc = intel_crtc_for_pipe(display, plane->pipe);
+-			   __assign_str(dev);
+-			   __assign_str(name);
++			   __assign_str(dev, __dev_name_kms(plane));
++			   __assign_str(name, plane->base.name);
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->scaler_id = scaler_id;
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+@@ -559,7 +559,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->scaler_id = scaler_id;
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+@@ -589,7 +589,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->scaler_id = scaler_id;
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+@@ -617,8 +617,8 @@
+ 			   struct intel_display *display = to_intel_display(plane->base.dev);
+ 			   struct intel_crtc *crtc = intel_crtc_for_pipe(display,
+ 									 plane->pipe);
+-			   __assign_str(dev);
+-			   __assign_str(name);
++			   __assign_str(dev, __dev_name_kms(plane));
++			   __assign_str(name, plane->base.name);
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -645,8 +645,8 @@
+ 			   struct intel_display *display = to_intel_display(plane->base.dev);
+ 			   struct intel_crtc *crtc = intel_crtc_for_pipe(display,
+ 									 plane->pipe);
+-			   __assign_str(dev);
+-			   __assign_str(name);
++			   __assign_str(dev, __dev_name_kms(plane));
++			   __assign_str(name, plane->base.name);
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -673,8 +673,8 @@
+ 			   struct intel_display *display = to_intel_display(plane->base.dev);
+ 			   struct intel_crtc *crtc = intel_crtc_for_pipe(display,
+ 									 plane->pipe);
+-			   __assign_str(dev);
+-			   __assign_str(name);
++			   __assign_str(dev, __dev_name_kms(plane));
++			   __assign_str(name, plane->base.name);
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -697,7 +697,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -720,7 +720,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -745,7 +745,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = intel_crtc_get_vblank_counter(crtc);
+ 			   __entry->scanline = intel_get_crtc_scanline(crtc);
+@@ -773,7 +773,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = crtc->debug.start_vbl_count;
+ 			   __entry->scanline = crtc->debug.scanline_start;
+@@ -799,7 +799,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_kms(crtc));
+ 			   __entry->pipe_name = pipe_name(crtc->pipe);
+ 			   __entry->frame = frame;
+ 			   __entry->scanline = scanline_end;
+@@ -822,7 +822,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_display(display));
+ 			   __entry->frontbuffer_bits = frontbuffer_bits;
+ 			   __entry->origin = origin;
+ 			   ),
+@@ -843,7 +843,7 @@
+ 			     ),
+ 
+ 	    TP_fast_assign(
+-			   __assign_str(dev);
++			   __assign_str(dev, __dev_name_display(display));
+ 			   __entry->frontbuffer_bits = frontbuffer_bits;
+ 			   __entry->origin = origin;
+ 			   ),

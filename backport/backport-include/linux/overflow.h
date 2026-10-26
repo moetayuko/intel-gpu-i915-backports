@@ -4,14 +4,22 @@
 
 #include_next <linux/overflow.h>
 
-/*
- * overflows_type() was added in newer kernels.
- * Fallback: value overflows target type T if truncating cast changes it.
- */
+#ifdef BPM_SIZE_MUL_NOT_PRESENT
+static inline size_t size_mul(size_t factor1, size_t factor2)
+{
+	size_t bytes;
+
+	if (check_mul_overflow(factor1, factor2, &bytes))
+		return SIZE_MAX;
+	return bytes;
+}
+#endif
+
+/* typeof accepts either a type or an expression, as the upstream API does. */
 #ifndef overflows_type
-#define overflows_type(n, T) ({                                 \
-        typeof(n) __n = (n);                                    \
-        __n != (typeof(n))((T)(__n));                           \
+#define overflows_type(n, T) ({ \
+	typeof(T) __val; \
+	__builtin_add_overflow((n), 0, &__val); \
 })
 #endif
 

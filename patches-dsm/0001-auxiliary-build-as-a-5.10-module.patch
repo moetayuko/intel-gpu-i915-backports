@@ -1,0 +1,104 @@
+Subject: [PATCH] auxiliary: adapt the bus to the DSM 5.10 device model
+
+--- a/dsm/auxiliary.c
++++ b/dsm/auxiliary.c
+@@ -15,7 +15,7 @@
+ #include <linux/pm_runtime.h>
+ #include <linux/string.h>
+ #include <linux/auxiliary_bus.h>
+-#include "base.h"
++#include <linux/of.h>
+ 
+ /**
+  * DOC: PURPOSE
+@@ -188,7 +188,7 @@
+ 	return NULL;
+ }
+ 
+-static int auxiliary_match(struct device *dev, const struct device_driver *drv)
++static int auxiliary_match(struct device *dev, struct device_driver *drv)
+ {
+ 	struct auxiliary_device *auxdev = to_auxiliary_dev(dev);
+ 	const struct auxiliary_driver *auxdrv = to_auxiliary_drv(drv);
+@@ -196,7 +196,7 @@
+ 	return !!auxiliary_match_id(auxdrv->id_table, auxdev);
+ }
+ 
+-static int auxiliary_uevent(const struct device *dev, struct kobj_uevent_env *env)
++static int auxiliary_uevent(struct device *dev, struct kobj_uevent_env *env)
+ {
+ 	const char *name, *p;
+ 
+@@ -218,23 +218,27 @@
+ 	struct auxiliary_device *auxdev = to_auxiliary_dev(dev);
+ 	int ret;
+ 
+-	ret = dev_pm_domain_attach(dev, PD_FLAG_ATTACH_POWER_ON |
+-					PD_FLAG_DETACH_POWER_OFF);
+-	if (ret) {
++	ret = dev_pm_domain_attach(dev, true);
++	if (ret < 0) {
+ 		dev_warn(dev, "Failed to attach to PM Domain : %d\n", ret);
+ 		return ret;
+ 	}
+ 
+-	return auxdrv->probe(auxdev, auxiliary_match_id(auxdrv->id_table, auxdev));
+-}
+-
+-static void auxiliary_bus_remove(struct device *dev)
++	ret = auxdrv->probe(auxdev, auxiliary_match_id(auxdrv->id_table, auxdev));
++	if (ret)
++		dev_pm_domain_detach(dev, true);
++	return ret;
++}
++
++static int auxiliary_bus_remove(struct device *dev)
+ {
+ 	const struct auxiliary_driver *auxdrv = to_auxiliary_drv(dev->driver);
+ 	struct auxiliary_device *auxdev = to_auxiliary_dev(dev);
+ 
+ 	if (auxdrv->remove)
+ 		auxdrv->remove(auxdev);
++	dev_pm_domain_detach(dev, true);
++	return 0;
+ }
+ 
+ static void auxiliary_bus_shutdown(struct device *dev)
+@@ -251,7 +255,7 @@
+ 		auxdrv->shutdown(auxdev);
+ }
+ 
+-static const struct bus_type auxiliary_bus_type = {
++static struct bus_type auxiliary_bus_type = {
+ 	.name = "auxiliary",
+ 	.probe = auxiliary_bus_probe,
+ 	.remove = auxiliary_bus_remove,
+@@ -429,7 +433,7 @@
+ 	auxdev->dev.parent = dev;
+ 	auxdev->dev.platform_data = platform_data;
+ 	auxdev->dev.release = auxiliary_device_release;
+-	device_set_of_node_from_dev(&auxdev->dev, dev);
++	auxdev->dev.of_node = of_node_get(dev->of_node);
+ 
+ 	ret = auxiliary_device_init(auxdev);
+ 	if (ret) {
+@@ -502,7 +506,15 @@
+ }
+ EXPORT_SYMBOL_GPL(__devm_auxiliary_device_create);
+ 
+-void __init auxiliary_bus_init(void)
+-{
+-	WARN_ON(bus_register(&auxiliary_bus_type));
+-}
++static int __init backport_auxiliary_init(void)
++{
++	return bus_register(&auxiliary_bus_type);
++}
++module_init(backport_auxiliary_init);
++
++static void __exit backport_auxiliary_exit(void)
++{
++	bus_unregister(&auxiliary_bus_type);
++}
++module_exit(backport_auxiliary_exit);
++MODULE_LICENSE("GPL");

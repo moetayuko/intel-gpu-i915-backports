@@ -1,0 +1,13 @@
+Subject: [PATCH] i915: retain system-wide PMU operation on 5.10
+
+--- a/drivers/gpu/drm/i915/i915_pmu.c
++++ b/drivers/gpu/drm/i915/i915_pmu.c
+@@ -1205,7 +1205,7 @@
+ 
+ 	pmu->base.module	= THIS_MODULE;
+ 	pmu->base.task_ctx_nr	= perf_invalid_context;
+-	pmu->base.scope		= PERF_PMU_SCOPE_SYS_WIDE;
++	/* 5.10 uses event_init() to reject task-bound events. */
+ 	pmu->base.event_init	= i915_pmu_event_init;
+ 	pmu->base.add		= i915_pmu_event_add;
+ 	pmu->base.del		= i915_pmu_event_del;

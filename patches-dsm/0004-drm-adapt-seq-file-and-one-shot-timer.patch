@@ -1,0 +1,24 @@
+Subject: [PATCH] drm: adapt seq_file includes and the one-shot fence timer
+
+--- a/drivers/gpu/drm/drm_edid.c
++++ b/drivers/gpu/drm/drm_edid.c
+@@ -38,6 +38,7 @@
+ #include <linux/module.h>
+ #include <linux/pci.h>
+ #include <linux/seq_buf.h>
++#include <linux/seq_file.h>
+ #include <linux/slab.h>
+ #include <linux/vga_switcheroo.h>
+ 
+--- a/drivers/gpu/drm/i915/i915_sw_fence.c
++++ b/drivers/gpu/drm/i915/i915_sw_fence.c
+@@ -472,7 +472,8 @@
+ 	struct i915_sw_dma_fence_cb_timer *cb =
+ 		container_of(wrk, typeof(*cb), work);
+ 
+-	timer_shutdown_sync(&cb->timer);
++	/* Armed once before registering the fence callback; never rearmed. */
++	del_timer_sync(&cb->timer);
+ 	dma_fence_put(cb->dma);
+ 
+ 	kfree_rcu(cb, rcu);

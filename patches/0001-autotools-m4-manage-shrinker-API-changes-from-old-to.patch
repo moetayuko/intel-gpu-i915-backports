@@ -19,25 +19,18 @@ Signed-off-by: Kanaka Raju Nayana <kanaka.raju.nayana@intel.com>
 Signed-off-by: Rachapalli Bandi Jagadeesh <jagadeesh.rachapalli.bandi@intel.com>
 Signed-off-by: Akanksha Hotta <akanksha.hotta@intel.com>
 ---
- drivers/gpu/drm/ttm/ttm_pool.c | 27 +++++++++++++++++++++++++++
- 1 file changed, 27 insertions(+)
-
 diff --git a/drivers/gpu/drm/ttm/ttm_pool.c b/drivers/gpu/drm/ttm/ttm_pool.c
-index 278bbe7..f70b4f7 100644
 --- a/drivers/gpu/drm/ttm/ttm_pool.c
 +++ b/drivers/gpu/drm/ttm/ttm_pool.c
-@@ -128,9 +128,22 @@ static struct ttm_pool_type global_uncached[NR_PAGE_ORDERS];
- static struct ttm_pool_type global_dma32_write_combined[NR_PAGE_ORDERS];
- static struct ttm_pool_type global_dma32_uncached[NR_PAGE_ORDERS];
+@@ -128,7 +128,19 @@
  
+ static spinlock_t shrinker_lock;
+ static struct list_head shrinker_list;
++#ifdef BPM_SHRINKER_ALLOC_NOT_PRESENT
 +static unsigned long ttm_pool_shrinker_count(struct shrinker *shrink,
 +					      struct shrink_control *sc);
 +static unsigned long ttm_pool_shrinker_scan(struct shrinker *shrink,
 +					     struct shrink_control *sc);
-+
- static spinlock_t shrinker_lock;
- static struct list_head shrinker_list;
-+#ifdef BPM_SHRINKER_ALLOC_NOT_PRESENT
 +static struct shrinker mm_shrinker = {
 +	.count_objects = ttm_pool_shrinker_count,
 +	.scan_objects = ttm_pool_shrinker_scan,
@@ -48,34 +41,34 @@ index 278bbe7..f70b4f7 100644
 +#endif
  static DECLARE_RWSEM(pool_shrink_rwsem);
  
- static int ttm_pool_nid(struct ttm_pool *pool)
-@@ -1347,9 +1360,15 @@ static int ttm_pool_debugfs_shrink_show(struct seq_file *m, void *data)
+ /* Allocate pages of size 1 << order with the given gfp_flags */
+@@ -1321,9 +1333,15 @@
+ 	unsigned long count;
+ 
  	fs_reclaim_acquire(GFP_KERNEL);
- 	for_each_node(nid) {
- 		sc.nid = nid;
 +#ifdef BPM_SHRINKER_ALLOC_NOT_PRESENT
-+		count = ttm_pool_shrinker_count(&mm_shrinker, &sc);
-+		seq_printf(m, "%d: %lu/%lu\n", nid, count,
-+			   ttm_pool_shrinker_scan(&mm_shrinker, &sc));
++	count = ttm_pool_shrinker_count(&mm_shrinker, &sc);
++	seq_printf(m, "%lu/%lu\n", count,
++		   ttm_pool_shrinker_scan(&mm_shrinker, &sc));
 +#else
- 		count = ttm_pool_shrinker_count(mm_shrinker, &sc);
- 		seq_printf(m, "%d: %lu/%lu\n", nid, count,
- 			   ttm_pool_shrinker_scan(mm_shrinker, &sc));
+ 	count = ttm_pool_shrinker_count(mm_shrinker, &sc);
+ 	seq_printf(m, "%lu/%lu\n", count,
+ 		   ttm_pool_shrinker_scan(mm_shrinker, &sc));
 +#endif
- 	}
  	fs_reclaim_release(GFP_KERNEL);
  
-@@ -1422,6 +1441,9 @@ int ttm_pool_mgr_init(unsigned long num_pages)
+ 	return 0;
+@@ -1371,6 +1389,9 @@
  #endif
  #endif
  
 +#ifdef BPM_SHRINKER_ALLOC_NOT_PRESENT
 +	register_shrinker(&mm_shrinker, "drm-ttm_pool");
 +#else
- 	mm_shrinker = shrinker_alloc(SHRINKER_NUMA_AWARE, "drm-ttm_pool");
+ 	mm_shrinker = shrinker_alloc(0, "drm-ttm_pool");
  	if (!mm_shrinker)
  		return -ENOMEM;
-@@ -1432,6 +1454,7 @@ int ttm_pool_mgr_init(unsigned long num_pages)
+@@ -1381,6 +1402,7 @@
  	mm_shrinker->seeks = 1;
  
  	shrinker_register(mm_shrinker);
@@ -83,7 +76,7 @@ index 278bbe7..f70b4f7 100644
  
  	return 0;
  }
-@@ -1453,6 +1476,10 @@ void ttm_pool_mgr_fini(void)
+@@ -1402,6 +1424,10 @@
  		ttm_pool_type_fini(&global_dma32_uncached[i]);
  	}
  
@@ -94,6 +87,3 @@ index 278bbe7..f70b4f7 100644
 +#endif
  	WARN_ON(!list_empty(&shrinker_list));
  }
--- 
-2.43.0
-

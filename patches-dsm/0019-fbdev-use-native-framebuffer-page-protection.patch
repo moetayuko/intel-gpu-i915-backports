@@ -1,0 +1,20 @@
+--- a/compat/fb_io_fops.c
++++ b/compat/fb_io_fops.c
+@@ -1,6 +1,7 @@
+ // SPDX-License-Identifier: GPL-2.0
+ 
+ #include <linux/export.h>
++#include <asm/fb.h>
+ #include <linux/fb.h>
+ #include <linux/module.h>
+ #include <linux/uaccess.h>
+@@ -170,8 +171,7 @@
+ 	}
+ 
+ 	vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
+-	vma->vm_page_prot = pgprot_framebuffer(vma->vm_page_prot, vma->vm_start,
+-					       vma->vm_end, start);
++	fb_pgprotect(NULL, vma, start);
+ 
+ 	return vm_iomap_memory(vma, start, len);
+ }
