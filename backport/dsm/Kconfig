@@ -1,0 +1,35 @@
+config DRM_BACKPORT
+	bool
+	default y
+
+config AUXILIARY_BUS
+	tristate
+	default m
+
+config GPU_BUDDY
+	tristate
+	default m
+
+config VIDEO
+	bool
+	default y
+
+config FB_CORE
+	tristate
+	default FB
+
+config FB_IOMEM_HELPERS
+	bool
+	default y
+
+config DMABUF_BACKPORT
+	tristate
+	default m
+
+config DMABUF_MOVE_NOTIFY
+	bool
+	default y
+
+config SYNC_FILE
+	bool
+	default y

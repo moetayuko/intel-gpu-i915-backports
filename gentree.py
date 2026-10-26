@@ -51,7 +51,7 @@ class Bp_Identity(object):
         else:
             self.kconfig_source_var_resafe = None
 
-def read_copy_list(copyfile):
+def read_copy_list(copyfile, profile="pve"):
     """
     Read a copy-list file and return a list of (source, target)
     tuples. The source and target are usually the same, but in
@@ -64,6 +64,10 @@ def read_copy_list(copyfile):
         # comments
         if not item or item[0] == '#':
             continue
+        if item.startswith('@dsm '):
+            if profile != 'dsm':
+                continue
+            item = item[5:]
         if item[0] == '/':
             raise Exception("Input path '%s' is absolute path, this isn't allowed" % (item, ))
         if ' -> ' in item:
@@ -641,6 +645,8 @@ def _main():
                         help='Kernel tree to copy drivers from')
     parser.add_argument('outdir', metavar='<output directory>', type=str,
                         help='Directory to write the generated tree to')
+    parser.add_argument('--profile', choices=['pve', 'dsm'], default='pve',
+                        help='Target module stack (default: pve)')
     parser.add_argument('--copy-list', metavar='<listfile>', type=argparse.FileType('r'),
                         default='copy-list',
                         help='File containing list of files/directories to copy, default "copy-list"')
@@ -730,7 +736,7 @@ def _main():
                    test_cocci=args.test_cocci,
                    profile_cocci=args.profile_cocci,
                    logwrite=logwrite,
-                   list_files=args.list_files)
+                   list_files=args.list_files, profile=args.profile)
     if args.list_files:
         print('\n'.join(retv))
     else:
@@ -745,7 +751,7 @@ def process(kerneldir, copy_list_file, git_revision=None,
             profile_cocci=None,
             logwrite=lambda x:None,
             git_tracked_version=False,
-            list_files=False):
+            list_files=False, profile="pve"):
     class Args(object):
         def __init__(self, kerneldir, copy_list_file,
                      git_revision, bpid, clean, refresh, base_name,
@@ -817,7 +823,7 @@ def process(kerneldir, copy_list_file, git_revision=None,
             logwrite('For rules on the release name see upload_release()')
             sys.exit(1)
 
-    copy_list = read_copy_list(args.copy_list)
+    copy_list = read_copy_list(args.copy_list, profile=profile)
     deplist = read_dependencies(os.path.join(source_dir, 'dependencies'))
 
     # do the copy
@@ -843,6 +849,12 @@ def process(kerneldir, copy_list_file, git_revision=None,
         'backport-include/',
         'docs/',
     ]]
+
+    if profile == 'dsm':
+        backport_files = [(s, d) for s, d in backport_files
+                          if d != 'Kconfig.sources']
+        backport_files += [('dsm/', 'dsm/'),
+                           ('dsm/Kconfig.sources', 'Kconfig.sources')]
 
     gitignore_dir = [(x, x) for x in [
         '.gitignore'
@@ -980,6 +992,12 @@ def process(kerneldir, copy_list_file, git_revision=None,
         fo.write(data)
         fo.close()
         git_debug_snapshot(args, "generate kernel version requirement Kconfig file")
+
+    if profile == 'dsm':
+        failure = apply_patches(args, "DSM", source_dir, 'patches-dsm',
+                                bpid.target_dir, logwrite)
+        if failure:
+            return failure
 
     # some post-processing is required
     configtree = kconfig.ConfigTree(os.path.join(bpid.target_dir, 'Kconfig'), bpid)
@@ -1142,7 +1160,9 @@ def process(kerneldir, copy_list_file, git_revision=None,
     # groups -- 50 seemed safer and is still fast)
     regexes = []
     for some_symbols in [disable_makefile[i:i + 50] for i in range(0, len(disable_makefile), 50)]:
-        r = '^(([^#].*((' + bpid.full_prefix_resafe + '|CONFIG_)(' + '|'.join([s for s in some_symbols]) + r')))\W)'
+        # Only suppress object entries. Commenting an ifeq/ifneq here leaves
+        # its else/endif behind and breaks target-specific build branches.
+        r = '^((obj-.*((' + bpid.full_prefix_resafe + '|CONFIG_)(' + '|'.join([s for s in some_symbols]) + r')))\W)'
         regexes.append(re.compile(r, re.MULTILINE))
     for f in maketree.get_makefiles():
         data = open(f, 'r').read()

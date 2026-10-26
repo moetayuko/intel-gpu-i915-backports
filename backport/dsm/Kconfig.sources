@@ -1,0 +1,3 @@
+source "$BACKPORT_DIR/compat/Kconfig"
+source "$BACKPORT_DIR/dsm/Kconfig"
+source "$BACKPORT_DIR/drivers/gpu/drm/Kconfig"

@@ -17,6 +17,7 @@ MAINTAINERS
 
 #Headers
 include/drm/intel/
+@dsm include/drm/ttm/ -> backport-ttm/include/drm/ttm/
 include/linux/cgroup_dmem.h
 include/linux/array_size.h
 include/uapi/linux/pci_regs.h
@@ -27,6 +28,7 @@ include/drm/drm_gem.h
 
 #ttm
 drivers/gpu/drm/Kconfig
+@dsm drivers/gpu/drm/ttm/
 
 drivers/platform/x86/intel_ips.h
 
@@ -36,3 +38,146 @@ include/linux/mei_aux.h
 drivers/gpu/drm/i915/
 include/drm/i915_sriov.h
 include/uapi/drm/i915_drm.h
+
+# DSM replaces the DRM module stack; these files stay out of PVE output.
+# @dsm entries are imported only with gentree.py --profile=dsm.
+@dsm drivers/gpu/drm/Kconfig.debug
+@dsm drivers/gpu/drm/Makefile
+@dsm drivers/gpu/drm/drm_atomic.c
+@dsm drivers/gpu/drm/drm_atomic_helper.c
+@dsm drivers/gpu/drm/drm_atomic_state_helper.c
+@dsm drivers/gpu/drm/drm_atomic_uapi.c
+@dsm drivers/gpu/drm/drm_auth.c
+@dsm drivers/gpu/drm/drm_blend.c
+@dsm drivers/gpu/drm/drm_bridge.c
+@dsm drivers/gpu/drm/drm_bridge_helper.c
+@dsm drivers/gpu/drm/drm_buddy.c
+@dsm drivers/gpu/drm/drm_cache.c
+@dsm drivers/gpu/drm/drm_client.c
+@dsm drivers/gpu/drm/drm_client_event.c
+@dsm drivers/gpu/drm/drm_client_modeset.c
+@dsm drivers/gpu/drm/drm_color_mgmt.c
+@dsm drivers/gpu/drm/drm_connector.c
+@dsm drivers/gpu/drm/drm_crtc.c
+@dsm drivers/gpu/drm/drm_crtc_helper.c
+@dsm drivers/gpu/drm/drm_crtc_helper_internal.h
+@dsm drivers/gpu/drm/drm_crtc_internal.h
+@dsm drivers/gpu/drm/drm_damage_helper.c
+@dsm drivers/gpu/drm/drm_debugfs.c
+@dsm drivers/gpu/drm/drm_debugfs_crc.c
+@dsm drivers/gpu/drm/drm_displayid.c
+@dsm drivers/gpu/drm/drm_displayid_internal.h
+@dsm drivers/gpu/drm/drm_draw.c
+@dsm drivers/gpu/drm/drm_draw_internal.h
+@dsm drivers/gpu/drm/drm_drv.c
+@dsm drivers/gpu/drm/drm_dumb_buffers.c
+@dsm drivers/gpu/drm/drm_edid.c
+@dsm drivers/gpu/drm/drm_edid_load.c
+@dsm drivers/gpu/drm/drm_eld.c
+@dsm drivers/gpu/drm/drm_encoder.c
+@dsm drivers/gpu/drm/drm_exec.c
+@dsm drivers/gpu/drm/drm_fb_dma_helper.c
+@dsm drivers/gpu/drm/drm_fb_helper.c
+@dsm drivers/gpu/drm/drm_fbdev_dma.c
+@dsm drivers/gpu/drm/drm_fbdev_shmem.c
+@dsm drivers/gpu/drm/drm_fbdev_ttm.c
+@dsm drivers/gpu/drm/drm_file.c
+@dsm drivers/gpu/drm/drm_flip_work.c
+@dsm drivers/gpu/drm/drm_format_helper.c
+@dsm drivers/gpu/drm/drm_format_internal.h
+@dsm drivers/gpu/drm/drm_fourcc.c
+@dsm drivers/gpu/drm/drm_framebuffer.c
+@dsm drivers/gpu/drm/drm_gem.c
+@dsm drivers/gpu/drm/drm_gem_atomic_helper.c
+@dsm drivers/gpu/drm/drm_gem_dma_helper.c
+@dsm drivers/gpu/drm/drm_gem_framebuffer_helper.c
+@dsm drivers/gpu/drm/drm_gem_shmem_helper.c
+@dsm drivers/gpu/drm/drm_gem_ttm_helper.c
+@dsm drivers/gpu/drm/drm_gem_vram_helper.c
+@dsm drivers/gpu/drm/drm_gpusvm.c
+@dsm drivers/gpu/drm/drm_gpuvm.c
+@dsm drivers/gpu/drm/drm_internal.h
+@dsm drivers/gpu/drm/drm_ioc32.c
+@dsm drivers/gpu/drm/drm_ioctl.c
+@dsm drivers/gpu/drm/drm_kms_helper_common.c
+@dsm drivers/gpu/drm/drm_lease.c
+@dsm drivers/gpu/drm/drm_managed.c
+@dsm drivers/gpu/drm/drm_mipi_dbi.c
+@dsm drivers/gpu/drm/drm_mipi_dsi.c
+@dsm drivers/gpu/drm/drm_mm.c
+@dsm drivers/gpu/drm/drm_mode_config.c
+@dsm drivers/gpu/drm/drm_mode_object.c
+@dsm drivers/gpu/drm/drm_modes.c
+@dsm drivers/gpu/drm/drm_modeset_helper.c
+@dsm drivers/gpu/drm/drm_modeset_lock.c
+@dsm drivers/gpu/drm/drm_of.c
+@dsm drivers/gpu/drm/drm_pagemap.c
+@dsm drivers/gpu/drm/drm_panel.c
+@dsm drivers/gpu/drm/drm_panel_backlight_quirks.c
+@dsm drivers/gpu/drm/drm_panel_orientation_quirks.c
+@dsm drivers/gpu/drm/drm_panic.c
+@dsm drivers/gpu/drm/drm_pci.c
+@dsm drivers/gpu/drm/drm_plane.c
+@dsm drivers/gpu/drm/drm_plane_helper.c
+@dsm drivers/gpu/drm/drm_prime.c
+@dsm drivers/gpu/drm/drm_print.c
+@dsm drivers/gpu/drm/drm_privacy_screen.c
+@dsm drivers/gpu/drm/drm_privacy_screen_x86.c
+@dsm drivers/gpu/drm/drm_probe_helper.c
+@dsm drivers/gpu/drm/drm_property.c
+@dsm drivers/gpu/drm/drm_rect.c
+@dsm drivers/gpu/drm/drm_self_refresh_helper.c
+@dsm drivers/gpu/drm/drm_simple_kms_helper.c
+@dsm drivers/gpu/drm/drm_suballoc.c
+@dsm drivers/gpu/drm/drm_syncobj.c
+@dsm drivers/gpu/drm/drm_sysfs.c
+@dsm drivers/gpu/drm/drm_trace.h
+@dsm drivers/gpu/drm/drm_trace_points.c
+@dsm drivers/gpu/drm/drm_vblank.c
+@dsm drivers/gpu/drm/drm_vblank_helper.c
+@dsm drivers/gpu/drm/drm_vblank_work.c
+@dsm drivers/gpu/drm/drm_vma_manager.c
+@dsm drivers/gpu/drm/drm_writeback.c
+@dsm drivers/gpu/drm/clients/
+@dsm drivers/gpu/drm/display/
+@dsm drivers/gpu/drm/bridge/panel.c
+@dsm drivers/gpu/drm/bridge/Kconfig
+@dsm drivers/gpu/drm/panel/Kconfig
+@dsm include/drm/ -> dsm/include/drm/
+@dsm include/uapi/drm/ -> dsm/include/uapi/drm/
+@dsm include/linux/gpu_buddy.h -> dsm/include/linux/gpu_buddy.h
+@dsm drivers/gpu/buddy.c -> dsm/gpu_buddy.c
+@dsm drivers/base/auxiliary.c -> dsm/auxiliary.c
+@dsm include/linux/auxiliary_bus.h -> dsm/include/linux/auxiliary_bus.h
+@dsm include/linux/iosys-map.h -> dsm/include/linux/iosys-map.h
+@dsm include/linux/cleanup.h -> dsm/include/linux/cleanup.h
+@dsm include/kunit/test-bug.h -> dsm/include/kunit/test-bug.h
+@dsm include/linux/ref_tracker.h -> dsm/include/linux/ref_tracker.h
+@dsm arch/x86/include/asm/intel-family.h -> dsm/include/asm/intel-family.h
+@dsm include/linux/args.h -> dsm/include/linux/args.h
+@dsm include/linux/stdarg.h -> dsm/include/linux/stdarg.h
+@dsm include/linux/dma-fence-unwrap.h -> dsm/include/linux/dma-fence-unwrap.h
+
+@dsm include/linux/int_log.h -> dsm/include/linux/int_log.h
+@dsm lib/math/int_log.c -> compat/int_log.c
+@dsm drivers/video/fbdev/core/fb_io_fops.c -> compat/fb_io_fops.c
+
+# Independent DMA-BUF core for the DSM profile.
+@dsm drivers/dma-buf/dma-buf.c -> dsm/dma-buf/dma-buf.c
+@dsm drivers/dma-buf/dma-resv.c -> dsm/dma-buf/dma-resv.c
+@dsm drivers/dma-buf/dma-fence.c -> dsm/dma-buf/dma-fence.c
+@dsm drivers/dma-buf/dma-fence-array.c -> dsm/dma-buf/dma-fence-array.c
+@dsm drivers/dma-buf/dma-fence-chain.c -> dsm/dma-buf/dma-fence-chain.c
+@dsm drivers/dma-buf/dma-fence-unwrap.c -> dsm/dma-buf/dma-fence-unwrap.c
+@dsm drivers/dma-buf/sync_file.c -> dsm/dma-buf/sync_file.c
+@dsm drivers/dma-buf/dma-buf-sysfs-stats.h -> dsm/dma-buf/dma-buf-sysfs-stats.h
+@dsm include/linux/dma-buf.h -> dsm/include/linux/dma-buf.h
+@dsm include/linux/dma-resv.h -> dsm/include/linux/dma-resv.h
+@dsm include/linux/dma-fence.h -> dsm/include/linux/dma-fence.h
+@dsm include/linux/dma-fence-array.h -> dsm/include/linux/dma-fence-array.h
+@dsm include/linux/dma-fence-chain.h -> dsm/include/linux/dma-fence-chain.h
+@dsm include/linux/dma-fence-unwrap.h -> dsm/include/linux/dma-fence-unwrap.h
+@dsm include/linux/sync_file.h -> dsm/include/linux/sync_file.h
+@dsm include/uapi/linux/dma-buf.h -> dsm/include/uapi/linux/dma-buf.h
+@dsm include/uapi/linux/sync_file.h -> dsm/include/uapi/linux/sync_file.h
+@dsm include/trace/events/dma_fence.h -> dsm/include/trace/events/dma_fence.h
