@@ -839,7 +839,6 @@ def process(kerneldir, copy_list_file, git_revision=None,
             ]
     backport_files = [(x, x) for x in [
         'Kconfig.sources',
-        'Kconfig.drm_ras',
         'compat/',
         'backport-include/',
         'docs/',

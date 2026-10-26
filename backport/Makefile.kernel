@@ -37,45 +37,6 @@ subdir-ccflags-y += $(call cc-option, -Wno-declaration-after-statement)
 subdir-ccflags-y += -std=gnu11
 
 obj-y += compat/
+
+# Shared DRM modules
 obj-$(CPTCFG_DRM_TTM)   += drivers/gpu/drm/ttm/
-obj-$(CPTCFG_DRM_SCHED) += drivers/gpu/drm/scheduler/
-drm_ttm_helper-y := drivers/gpu/drm/drm_gem_ttm_helper.o
-obj-$(CPTCFG_DRM_TTM_HELPER) += drm_ttm_helper.o
-drm_exec-y := drivers/gpu/drm/drm_exec.o
-obj-$(CPTCFG_DRM_EXEC) += drm_exec.o
-drm_buddy-y := drivers/gpu/buddy.o drivers/gpu/drm/drm_buddy.o
-obj-$(CPTCFG_DRM_BUDDY) += drm_buddy.o
-drm_suballoc_helper-y := drivers/gpu/drm/drm_suballoc.o
-obj-$(CPTCFG_DRM_SUBALLOC_HELPER) += drm_suballoc_helper.o
-# DRM RAS support
-drm_ras-y := drivers/gpu/drm/drm_ras.o drivers/gpu/drm/drm_ras_nl.o drivers/gpu/drm/drm_ras_genl_family.o
-obj-$(CPTCFG_DRM_RAS) += drm_ras.o
-# Only compile drm_gpuvm if config is enabled and base kernel doesn't have it
-ifneq ($(filter m y, $(CPTCFG_DRM_GPUVM)),)
-obj-$(CPTCFG_DRM_GPUVM) += drm_gpuvm.o
-drm_gpuvm-y := drivers/gpu/drm/drm_gpuvm.o
-endif
-# Compile drm_gpusvm_helper if config is enabled and base kernel doesn't have it
-ifneq ($(filter m y, $(CPTCFG_DRM_GPUSVM)),)
-obj-$(CPTCFG_DRM_GPUSVM) += drm_gpusvm_helper.o
-drm_gpusvm_helper-y := drivers/gpu/drm/drm_gpusvm.o
-drm_gpusvm_helper-$(CONFIG_ZONE_DEVICE) += drivers/gpu/drm/drm_pagemap.o drivers/gpu/drm/drm_pagemap_util.o
-endif
-obj-$(CPTCFG_INTEL_VSEC) += drivers/platform/x86/intel/
-obj-$(CPTCFG_MFD_INTEL_PMT) += drivers/platform/x86/intel/
-#mtd
-mtd_intel_dg-y := drivers/mtd/devices/mtd_intel_dg.o
-obj-$(CPTCFG_MTD_INTEL_DG)      += mtd_intel_dg.o
-
-#vfio
-# On v5.15 - v6.1: compile full VFIO framework (VFIO core + pci-core + xe-vfio-pci)
-# On 6.2+: only compile xe-vfio-pci against in-kernel VFIO
-ifdef CPTCFG_BUILD_FULL_VFIO
-NOSTDINC_FLAGS += -I$(M)/include/vfio
-obj-$(CPTCFG_VFIO) += drivers/vfio/
-else
-obj-$(CPTCFG_XE_VFIO_PCI) += drivers/vfio/pci/xe/
-endif
-
-#mei
-obj-$(CPTCFG_INTEL_MEI) += drivers/misc/mei/

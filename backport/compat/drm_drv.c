@@ -28,7 +28,6 @@
 
 
 #include <linux/bitops.h>
-#include <linux/cgroup_dmem.h>
 #include <linux/debugfs.h>
 #include <linux/export.h>
 #include <linux/fs.h>

@@ -34,25 +34,6 @@ AC_DEFUN([AC_DRM_LINE_PRINTER_NOT_PRESENT], [
 ])
 
 dnl #
-dnl # v6.11-c2ef66e9ad88
-dnl # drm/print: Improve drm_dbg_printer
-dnl #
-AC_DEFUN([AC_STRUCT_DRM_PRINTER_ORIGIN_NOT_PRESENT], [
-       AC_KERNEL_DO_BACKGROUND([
-               AC_KERNEL_TRY_COMPILE([
-                               #include <drm/drm_print.h>
-                       ],[
-                               struct drm_printer p;
-                               p->origin=NULL;
-                       ],[
-                       ],[
-                               AC_DEFINE(BPM_STRUCT_DRM_PRINTER_ORIGIN_NOT_PRESENT, 1,
-                                       [origin member is not part of "struct drm_printer"])
-               ])
-       ])
-])
-
-dnl #
 dnl # v6.9-20f5583dd7a5
 dnl # drm/print: Add drm_dbg_ratelimited
 dnl #

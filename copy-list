@@ -17,115 +17,24 @@ MAINTAINERS
 
 #Headers
 include/drm/intel/pciids.h
-include/drm/intel/intel_lb_mei_interface.h
 include/drm/intel/i915_component.h
 include/drm/intel/pick.h
 include/drm/intel/reg_bits.h
 include/drm/ttm/
-include/linux/intel_vsec.h
 include/linux/cgroup_dmem.h
-include/linux/intel_dg_nvm_aux.h
-include/linux/intel_pmt_features.h
 include/linux/array_size.h
-include/uapi/drm/drm.h
-include/uapi/drm/drm_mode.h
-include/uapi/drm/drm_ras.h
-include/uapi/drm/xe_drm.h
-include/uapi/drm/xe_drm_prelim.h
 include/uapi/linux/pci_regs.h
 include/linux/aperture.h
 include/kunit/visibility.h
 
-#drm_gpuvm
 include/drm/drm_gem.h
-include/drm/drm_gpuvm.h
-include/drm/drm_pagemap.h
-include/drm/drm_gpusvm.h
-include/drm/drm_dumb_buffers.h
-include/drm/drm_pagemap_util.h
-include/drm/drm_ras.h
-drivers/gpu/drm/drm_gpuvm.c
-drivers/gpu/drm/drm_gpusvm.c
-drivers/gpu/drm/drm_pagemap.c
-drivers/gpu/drm/drm_pagemap_util.c
-
-#drm_ras
-include/drm/drm_ras_genl_family.h
-drivers/gpu/drm/drm_ras.c
-drivers/gpu/drm/drm_ras_nl.c
-drivers/gpu/drm/drm_ras_nl.h
-drivers/gpu/drm/drm_ras_genl_family.c
-Documentation/netlink/specs/drm_ras.yaml
-
-#drm_exec
-include/drm/drm_exec.h
-drivers/gpu/drm/drm_exec.c
-
-#drm_buddy
-drivers/gpu/drm/drm_buddy.c
-include/drm/drm_buddy.h
-drivers/gpu/buddy.c
-include/linux/gpu_buddy.h
-
-#drm_suballoc
-drivers/gpu/drm/drm_suballoc.c
-include/drm/drm_suballoc.h
-
-#scheduler
-include/drm/gpu_scheduler.h
-drivers/gpu/drm/scheduler/
 
 #ttm
-drivers/gpu/drm/Makefile
 drivers/gpu/drm/Kconfig
 drivers/gpu/drm/ttm/
-drivers/gpu/drm/drm_gem_ttm_helper.c
 
-#xe
-drivers/gpu/drm/xe/
-
-#i915 header files
-drivers/gpu/drm/i915/i915_reg_defs.h
-
-#pmt-vsec
-drivers/platform/x86/intel/pmt/class.h
-drivers/platform/x86/intel/pmt/telemetry.h
-drivers/platform/x86/intel/pmt/class.c
-drivers/platform/x86/intel/pmt/crashlog.c
-drivers/platform/x86/intel/pmt/telemetry.c
-drivers/platform/x86/intel/pmt/Kconfig
-drivers/platform/x86/intel/pmt/Makefile
-drivers/platform/x86/intel/Makefile
-drivers/platform/x86/intel/Kconfig
-drivers/platform/x86/intel/vsec.c
 drivers/platform/x86/intel_ips.h
-drivers/platform/x86/intel/pmt/discovery.c
-drivers/platform/x86/intel/pmt/features.c
 
-#mtd
-drivers/mtd/devices/mtd_intel_dg.c
-drivers/mtd/devices/Makefile
-drivers/mtd/devices/Kconfig
-
-#vfio
-drivers/vfio/
-include/drm/intel/xe_sriov_vfio.h
-include/linux/vfio.h -> include/vfio/linux/vfio.h
-include/uapi/linux/vfio.h -> include/vfio/uapi/linux/vfio.h
-include/linux/vfio_pci_core.h -> include/vfio/linux/vfio_pci_core.h
-include/linux/iova_bitmap.h -> include/vfio/linux/iova_bitmap.h
-include/linux/iommufd.h -> include/vfio/linux/iommufd.h
-include/uapi/linux/iommufd.h -> include/vfio/uapi/linux/iommufd.h
-include/linux/irqdomain.h -> include/vfio/linux/irqdomain.h
-include/linux/irqdomain_defs.h -> include/vfio/linux/irqdomain_defs.h
-
-#mei
-drivers/misc/mei/
 include/linux/mei_aux.h
-include/linux/mei_cl_bus.h
-include/uapi/linux/mei.h
 include/drm/intel/i915_hdcp_interface.h
 include/drm/intel/i915_pxp_tee_interface.h
-
-#i2c-designware
-include/linux/designware_i2c.h

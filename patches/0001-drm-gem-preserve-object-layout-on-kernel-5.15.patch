@@ -1,43 +1,19 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: Kanaka Raju Nayana <kanaka.raju.nayana@intel.com>
 Date: Tue, 9 Jun 2026 07:23:51 +0530
-Subject: drm/xe: fix NULL pointer in drm_gem_object_free on kv 5.15
+Subject: drm/gem: preserve object layout on kernel 5.15
 
 The v5.15 kernel's drm_gem_object_free() reads 'funcs' at a fixed compiled
 offset. On v5.15 'funcs' sits after '_resv', but the v6.17 backport header
 placed 'gpuva' before 'funcs', shifting the offset and causing the kernel
 to read the wrong bytes as NULL.
 
-Fix by adding an autoconf probe to detect whether the kernel struct has
-'gpuva'. On v5.15, reorder the backport struct to put 'funcs' before 'gpuva'
-to match the kernel ABI. Also explicitly initialise the backport-added
-gpuva/lru fields in xe_bo_create_internal() on v5.15, where the kernel's
-drm_gem_private_object_init() does not.
+Use the target-kernel gpuva probe to preserve the position of funcs in the
+imported shared GEM object. Xe object initialization is no longer included.
 
 Signed-off-by: Kanaka Raju Nayana <kanaka.raju.nayana@intel.com>
 ---
- drivers/gpu/drm/xe/xe_bo.c |  7 +++-
- include/drm/drm_gem.h      | 65 ++++++++++++++++++++++------------
- 2 files changed, 49 insertions(+), 23 deletions(-)
 
-diff --git a/drivers/gpu/drm/xe/xe_bo.c b/drivers/gpu/drm/xe/xe_bo.c
-index 5cf4fdd..3dde197 100644
---- a/drivers/gpu/drm/xe/xe_bo.c
-+++ b/drivers/gpu/drm/xe/xe_bo.c
-@@ -2167,7 +2167,12 @@ struct xe_bo *xe_bo_init_locked(struct xe_device *xe, struct xe_bo *bo,
- 	INIT_LIST_HEAD(&bo->vram_userfault_link);
- 
- 	drm_gem_private_object_init(&xe->drm, &bo->ttm.base, size);
--
-+#ifdef BPM_DRM_GEM_OBJECT_GPUVA_MEMBER_NOT_PRESENT
-+	/* v5.15: initialize backport-added gpuva/lru fields. */
-+        INIT_LIST_HEAD(&bo->ttm.base.gpuva.list);
-+        INIT_LIST_HEAD(&bo->ttm.base.lru_node);
-+        bo->ttm.base.lru = NULL;
-+#endif
- 	if (resv) {
- 		ctx.allow_res_evict = !(flags & XE_BO_FLAG_NO_RESV_EVICT);
- 		ctx.resv = resv;
 diff --git a/include/drm/drm_gem.h b/include/drm/drm_gem.h
 index d3a7b43..e57f903 100644
 --- a/include/drm/drm_gem.h

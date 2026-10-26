@@ -42,8 +42,4 @@
 #define PCI_DVSEC_HEADER1_LEN(x)   (((x) >> 20) & 0xfff)
 #endif
 
-#ifdef BPM_DEVICE_SET_DRIVER_OVERRIDE_NOT_PRESENT
-int device_set_driver_override(struct device *dev, const char *s);
-#endif
-
 #endif /* __BACKPORT_DEVICE_H_ */

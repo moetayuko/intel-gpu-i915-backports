@@ -11,16 +11,4 @@
 #define NR_PAGE_ORDERS (MAX_PAGE_ORDER + 1)
 #endif
 
-#ifdef BPM_PAGE_PGMAP_NOT_PRESENT
-struct dev_pagemap;
-/*
- * v7.0 moved pgmap lookup into page_pgmap(). On 6.6 the field
- * lives directly in struct page (ZONE_DEVICE pages).
- */
-static inline struct dev_pagemap *page_pgmap(const struct page *page)
-{
-	return page->pgmap;
-}
-#endif /* BPM_PAGE_PGMAP_NOT_PRESENT */
-
 #endif /* __BACKPORT_LINUX_MMZONE_H */

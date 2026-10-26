@@ -11,10 +11,4 @@
   #endif
 #endif /* EMPTY_VMA_FLAGS */
 
-#ifdef BPM_NUM_PAGES_CONTIGUOUS_NOT_PRESENT
-typedef struct {
-	unsigned long f;
-} memdesc_flags_t;
-#endif
-
 #endif /* _BACKPORT_LINUX_MM_TYPES_H */

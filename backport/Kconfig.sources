@@ -1,27 +1,5 @@
 # this has the configuration for the backport code
 source "$BACKPORT_DIR/compat/Kconfig"
 
-# DRM RAS support
-source "$BACKPORT_DIR/Kconfig.drm_ras"
-
 # these are copied from the kernel
-source "$BACKPORT_DIR/drivers/gpu/drm/xe/Kconfig"
-source "$BACKPORT_DIR/drivers/mtd/devices/Kconfig"
-
-# pmt
-source "$BACKPORT_DIR/drivers/platform/x86/intel/pmt/Kconfig"
-source "$BACKPORT_DIR/drivers/platform/x86/intel/Kconfig"
-
-#VFIO
-if BUILD_FULL_VFIO
-source "$BACKPORT_DIR/drivers/vfio/Kconfig"
-endif
-if !BUILD_FULL_VFIO
-source "$BACKPORT_DIR/drivers/vfio/pci/xe/Kconfig"
-endif
-
-# MEI
-source "$BACKPORT_DIR/drivers/misc/mei/Kconfig"
-source "$BACKPORT_DIR/drivers/misc/mei/hdcp/Kconfig"
-source "$BACKPORT_DIR/drivers/misc/mei/gsc_proxy/Kconfig"
-source "$BACKPORT_DIR/drivers/misc/mei/pxp/Kconfig"
+source "$BACKPORT_DIR/drivers/gpu/drm/i915/Kconfig"

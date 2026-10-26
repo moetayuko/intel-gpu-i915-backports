@@ -1,62 +1,3 @@
-dnl #
-dnl # v6.17-84f890414a12
-dnl # PCI/IOV: Allow drivers to control VF BAR size
-dnl #
-AC_DEFUN([AC_PCI_IOV_VF_BAR_FUNCTIONS_NOT_PRESENT], [
-	AC_KERNEL_DO_BACKGROUND([
-		AC_KERNEL_TRY_COMPILE([
-			#include <linux/pci.h>
-		],[
-			struct pci_dev *pdev = NULL;
-			u32 sizes;
-			sizes = pci_iov_vf_bar_get_sizes(pdev, 0, 1);
-		],[
-		],[
-			AC_DEFINE([BPM_PCI_IOV_VF_BAR_FUNCTIONS_NOT_PRESENT], 1,
-				[pci_iov_vf_bar_get_sizes and pci_iov_vf_bar_set_size functions not available])
-		])
-	])
-])
-
-dnl #
-dnl # v5.18-a7e9f240c0da
-dnl # PCI/IOV: Add pci_iov_get_pf_drvdata() to allow VF reaching the drvdata of a PF
-AC_DEFUN([AC_PCI_IOV_GET_PF_DRVDATA_NOT_PRESENT], [
-        AC_KERNEL_DO_BACKGROUND([
-                AC_KERNEL_TRY_COMPILE([
-                        #include <linux/pci.h>
-                ],[
-                        struct pci_dev *dev = NULL;
-			struct pci_driver *pf_driver = NULL;
-			pci_iov_get_pf_drvdata(dev, pf_driver);
-                ],[
-                ],[
-                        AC_DEFINE([BPM_PCI_IOV_GET_PF_DRVDATA_NOT_PRESENT], 1,
-                                [pci_iov_get_pf_drvdata() function not available])
-                ])
-        ])
-])
-
-dnl # v5.19 - 512881eacfa7
-dnl # PCI: Add device DMA ownership managementn
-dnl #
-AC_DEFUN([AC_DRIVER_MANAGED_DMA_NOT_PRESENT], [
-	AC_KERNEL_DO_BACKGROUND([
-		AC_KERNEL_TRY_COMPILE([
-			#include <linux/pci.h>
-		],[
-			static struct pci_driver drv = {
-				.driver_managed_dma = true,
-			};
-			(void)drv;
-		],[
-		],[
-			AC_DEFINE([BPM_DRIVER_MANAGED_DMA_NOT_PRESENT], 1,
-			[struct pci_driver does not have driver_managed_dma member])
-		])
-	])
-])
-
 dnl # v6.12-d140f80f6035
 dnl # PCI: Deprecate pcim_iomap_regions() in favor of pcim_iomap_region()
 dnl #
@@ -74,25 +15,6 @@ AC_DEFUN([AC_PCIM_IOMAP_REGION_NOT_PRESENT], [
                ])
        ])
 ])
-
-dnl #
-dnl # v6.8-ac16087134b8
-dnl # PCI: Move pci_clear_and_set_dword() helper to PCI header
-dnl #
-AC_DEFUN([AC_PCI_CLEAR_AND_SET_CONFIG_DWORD_NOT_PRESENT], [
-        AC_KERNEL_DO_BACKGROUND([
-                AC_KERNEL_TRY_COMPILE([
-                        #include <linux/pci.h>
-                ],[
-                        pci_clear_and_set_config_dword(NULL, 0, 0, 0);
-                ],[
-                ],[
-                        AC_DEFINE([BPM_PCI_CLEAR_AND_SET_CONFIG_DWORD_NOT_PRESENT], 1,
-                        [pci_clear_and_set_config_dword() function not available])
-                ])
-        ])
-])
-
 dnl #
 dnl # v6.6-49f776724e64
 dnl # PCI/AER: Export pcie_aer_is_native()

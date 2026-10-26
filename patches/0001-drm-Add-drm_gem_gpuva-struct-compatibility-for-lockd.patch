@@ -4,14 +4,8 @@ Date: Wed, 10 Jun 2026 14:13:37 +0530
 Subject: drm: Add drm_gem_gpuva struct compatibility for lockdep
  config
 
-Add the compatibility handling around the gpuva member in
-struct drm_gem_object and drm_gpuvm paths. Kernel 6.18 introduced
-a layout change (replace struct lockdep_map *lock_dep_map guarded by
-CONFIG_LOCKDEP with an unconditional struct mutex lock).
-
-Implement compatibility handling in both include/drm/drm_gem.h and
-drivers/gpu/drm/drm_gpuvm.c so the backport keeps correct struct layout,
-lock assertions, and deferred-put behavior on kernels without gpuva.lock.
+Keep the imported GEM object's gpuva field compatible with target kernels.
+Only the shared GEM header is patched; no GPUVM implementation is imported.
 
 Reference:
    e7fa80e2932c
@@ -21,84 +15,6 @@ Reference:
 
 Signed-off-by: Akanksha Hotta <akanksha.hotta@intel.com>
 ---
- drivers/gpu/drm/drm_gpuvm.c | 20 +++++++++++++++++---
- include/drm/drm_gem.h       | 22 ++++++++++++++++++++++
- 2 files changed, 42 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/gpu/drm/drm_gpuvm.c b/drivers/gpu/drm/drm_gpuvm.c
-index 44acfe4..5475b87 100644
---- a/drivers/gpu/drm/drm_gpuvm.c
-+++ b/drivers/gpu/drm/drm_gpuvm.c
-@@ -1733,7 +1733,9 @@ drm_gpuvm_bo_defer_free(struct kref *kref)
- 						  kref);
-
- 	drm_gpuvm_bo_into_zombie(kref);
-+#ifndef BPM_DRM_GEM_GPUVA_MUTEX_NOT_PRESENT
- 	mutex_unlock(&vm_bo->obj->gpuva.lock);
-+#endif
- 	drm_gpuvm_bo_defer_zombie_cleanup(vm_bo);
- }
-
-@@ -1756,10 +1758,14 @@ drm_gpuvm_bo_put_deferred(struct drm_gpuvm_bo *vm_bo)
- 		return false;
-
- 	drm_WARN_ON(vm_bo->vm->drm, !drm_gpuvm_immediate_mode(vm_bo->vm));
--
-+#ifndef BPM_DRM_GEM_GPUVA_MUTEX_NOT_PRESENT
- 	return !!kref_put_mutex(&vm_bo->kref,
- 				drm_gpuvm_bo_defer_free,
- 				&vm_bo->obj->gpuva.lock);
-+#else
-+       /* gpuva.lock mutex not present on this kernel; IMMEDIATE_MODE unsupported */
-+       return false;
-+#endif
- }
- EXPORT_SYMBOL_GPL(drm_gpuvm_bo_put_deferred);
-
-@@ -1906,18 +1913,23 @@ drm_gpuvm_bo_obtain_prealloc(struct drm_gpuvm_bo *__vm_bo)
- 	struct drm_gpuvm_bo *vm_bo;
-
- 	drm_WARN_ON(gpuvm->drm, !drm_gpuvm_immediate_mode(gpuvm));
--
-+#ifndef BPM_DRM_GEM_GPUVA_MUTEX_NOT_PRESENT
- 	mutex_lock(&obj->gpuva.lock);
-+#endif
- 	vm_bo = drm_gpuvm_bo_find(gpuvm, obj);
- 	if (vm_bo) {
-+#ifndef BPM_DRM_GEM_GPUVA_MUTEX_NOT_PRESENT
- 		mutex_unlock(&obj->gpuva.lock);
-+#endif
- 		kref_put(&__vm_bo->kref, drm_gpuvm_bo_destroy_not_in_lists_kref);
- 		return vm_bo;
- 	}
-
- 	drm_gem_gpuva_assert_lock_held(gpuvm, obj);
- 	list_add_tail(&__vm_bo->list.entry.gem, &obj->gpuva.list);
-+#ifndef BPM_DRM_GEM_GPUVA_MUTEX_NOT_PRESENT
- 	mutex_unlock(&obj->gpuva.lock);
-+#endif
-
- 	return __vm_bo;
- }
-@@ -2160,15 +2172,18 @@ drm_gpuva_unlink_defer(struct drm_gpuva *va)
- 		return;
-
- 	drm_WARN_ON(vm_bo->vm->drm, !drm_gpuvm_immediate_mode(vm_bo->vm));
--
-+#ifndef BPM_DRM_GEM_GPUVA_MUTEX_NOT_PRESENT
- 	mutex_lock(&obj->gpuva.lock);
-+#endif
- 	list_del_init(&va->gem.entry);
-
- 	/*
- 	 * This is drm_gpuvm_bo_put_deferred() except we already hold the mutex.
- 	 */
- 	should_defer_bo = kref_put(&vm_bo->kref, drm_gpuvm_bo_into_zombie);
-+#ifndef BPM_DRM_GEM_GPUVA_MUTEX_NOT_PRESENT
- 	mutex_unlock(&obj->gpuva.lock);
-+#endif
- 	if (should_defer_bo)
- 		drm_gpuvm_bo_defer_zombie_cleanup(vm_bo);
 
 diff --git a/include/drm/drm_gem.h b/include/drm/drm_gem.h
 --- a/include/drm/drm_gem.h

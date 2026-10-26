@@ -7,21 +7,9 @@ Add BACKPORT_MOD_VERSIONS to display information about oot module version.
 
 Signed-off-by: Kanaka Raju Nayana <kanaka.raju.nayana@intel.com>
 ---
- drivers/gpu/drm/drm_gem_ttm_helper.c | 1 +
- drivers/gpu/drm/ttm/ttm_module.c     | 1 +
- 2 files changed, 2 insertions(+)
+ drivers/gpu/drm/ttm/ttm_module.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/drivers/gpu/drm/drm_gem_ttm_helper.c b/drivers/gpu/drm/drm_gem_ttm_helper.c
-index 3734aa2..eb81ba2 100644
---- a/drivers/gpu/drm/drm_gem_ttm_helper.c
-+++ b/drivers/gpu/drm/drm_gem_ttm_helper.c
-@@ -149,5 +149,6 @@ int drm_gem_ttm_dumb_map_offset(struct drm_file *file, struct drm_device *dev,
- }
- EXPORT_SYMBOL(drm_gem_ttm_dumb_map_offset);
- 
-+BACKPORT_MOD_VERSIONS
- MODULE_DESCRIPTION("DRM gem ttm helpers");
- MODULE_LICENSE("GPL");
 diff --git a/drivers/gpu/drm/ttm/ttm_module.c b/drivers/gpu/drm/ttm/ttm_module.c
 index b3fffe7..0da7fb8 100644
 --- a/drivers/gpu/drm/ttm/ttm_module.c

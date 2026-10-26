@@ -4,11 +4,4 @@ obj-m += xe-compat.o
 else
 obj-y += xe-compat.o
 endif
-xe-compat-y += main.o ptrace.o iov.o drm_drv.o drm_managed.o hrtimer.o memory.o dma-fence-array.o drm_print.o drm_dumb_buffers.o bitmap.o drm_suballoc.o string_helpers.o set_driver_override.o dma-resv.o
-xe-compat-y += anon_inodes.o iommu.o msi_api.o pci_iov.o access.o gpu-buddy.o
-
-ifeq ($(CPTCFG_DRM_GPUVM),)
-xe-compat-y += drm_gpuvm.o drm_gpuvm_madvise.o
-endif
-
-# Kernel backport compatibility code
+xe-compat-y += main.o drm_drv.o drm_managed.o hrtimer.o dma-fence-array.o drm_print.o drm_dumb_buffers.o bitmap.o string_helpers.o dma-resv.o
