@@ -1,0 +1,64 @@
+From f23fc66568b8626f5fe91b16428222a65f370b2f Mon Sep 17 00:00:00 2001
+From: MoetaYuko <loli@yuko.moe>
+Date: Sun, 12 Nov 2023 16:08:42 +0800
+Subject: [PATCH] Revert "drm/i915: replace X86_FEATURE_PAT with pat_enabled()"
+
+This reverts commit bdd8b6c98239cad3a976d6f197afc2c794d3cef8.
+---
+ drivers/gpu/drm/i915/gem/i915_gem_mman.c  | 8 ++++----
+ drivers/gpu/drm/i915/gem/i915_gem_pages.c | 2 +-
+ 2 files changed, 5 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/gpu/drm/i915/gem/i915_gem_mman.c b/drivers/gpu/drm/i915/gem/i915_gem_mman.c
+index 5a12b96f..4f660c62 100644
+--- a/drivers/gpu/drm/i915/gem/i915_gem_mman.c
++++ b/drivers/gpu/drm/i915/gem/i915_gem_mman.c
+@@ -76,7 +76,7 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
+ 	if (args->flags & ~(I915_MMAP_WC))
+ 		return -EINVAL;
+ 
+-	if (args->flags & I915_MMAP_WC && !pat_enabled())
++	if (args->flags & I915_MMAP_WC && !boot_cpu_has(X86_FEATURE_PAT))
+ 		return -ENODEV;
+ 
+ 	obj = i915_gem_object_lookup(file, args->handle);
+@@ -769,7 +769,7 @@ i915_gem_dumb_mmap_offset(struct drm_file *file,
+ 
+ 	if (HAS_LMEM(to_i915(dev)))
+ 		mmap_type = I915_MMAP_TYPE_FIXED;
+-	else if (pat_enabled())
++	else if (boot_cpu_has(X86_FEATURE_PAT))
+ 		mmap_type = I915_MMAP_TYPE_WC;
+ 	else if (!i915_ggtt_has_aperture(to_gt(i915)->ggtt))
+ 		return -ENODEV;
+@@ -825,7 +825,7 @@ i915_gem_mmap_offset_ioctl(struct drm_device *dev, void *data,
+ 		break;
+ 
+ 	case I915_MMAP_OFFSET_WC:
+-		if (!pat_enabled())
++		if (!boot_cpu_has(X86_FEATURE_PAT))
+ 			return -ENODEV;
+ 		type = I915_MMAP_TYPE_WC;
+ 		break;
+@@ -835,7 +835,7 @@ i915_gem_mmap_offset_ioctl(struct drm_device *dev, void *data,
+ 		break;
+ 
+ 	case I915_MMAP_OFFSET_UC:
+-		if (!pat_enabled())
++		if (!boot_cpu_has(X86_FEATURE_PAT))
+ 			return -ENODEV;
+ 		type = I915_MMAP_TYPE_UC;
+ 		break;
+diff --git a/drivers/gpu/drm/i915/gem/i915_gem_pages.c b/drivers/gpu/drm/i915/gem/i915_gem_pages.c
+index 716c2818..422577c7 100644
+--- a/drivers/gpu/drm/i915/gem/i915_gem_pages.c
++++ b/drivers/gpu/drm/i915/gem/i915_gem_pages.c
+@@ -441,7 +441,7 @@ void *i915_gem_object_pin_map(struct drm_i915_gem_object *obj,
+ 			goto err_unpin;
+ 		}
+ 
+-		if (GEM_WARN_ON(type == I915_MAP_WC && !pat_enabled()))
++		if (GEM_WARN_ON(type == I915_MAP_WC && !static_cpu_has(X86_FEATURE_PAT)))
+ 			ptr = ERR_PTR(-ENODEV);
+ 		else if (i915_gem_object_has_struct_page(obj))
+ 			ptr = i915_gem_object_map_page(obj, type);
