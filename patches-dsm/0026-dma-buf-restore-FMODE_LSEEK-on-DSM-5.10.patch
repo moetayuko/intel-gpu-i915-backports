@@ -1,0 +1,24 @@
+From f348146ecf497bcbe48f3e2ff9494cc62b60b091 Mon Sep 17 00:00:00 2001
+From: MoetaYuko <loli@yuko.moe>
+Date: Sun, 14 Apr 2024 11:11:12 +0800
+Subject: [PATCH] Revert "dma-buf: remove useless FMODE_LSEEK flag"
+
+This reverts commit c9eb2d427c1c428e4f4e29f1e635b9a83236c015.
+
+Fixes https://github.com/RROrg/rr/issues/654
+---
+ dsm/dma-buf/dma-buf.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/dsm/dma-buf/dma-buf.c b/dsm/dma-buf/dma-buf.c
+index 55da4a03..195f1afa 100644
+--- a/dsm/dma-buf/dma-buf.c
++++ b/dsm/dma-buf/dma-buf.c
+@@ -698,6 +698,7 @@ struct dma_buf *dma_buf_export(const struct dma_buf_export_info *exp_info)
+ 
+ 	file->private_data = dmabuf;
+ 	file->f_path.dentry->d_fsdata = dmabuf;
++	file->f_mode |= FMODE_LSEEK;
+ 	dmabuf->file = file;
+ 
+ 	__dma_buf_list_add(dmabuf);
