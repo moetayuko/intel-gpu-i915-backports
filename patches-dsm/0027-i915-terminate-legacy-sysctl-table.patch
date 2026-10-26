@@ -1,0 +1,15 @@
+DSM 5.10 register_sysctl() scans until procname is NULL, unlike the
+sized registration API used by the donor kernel. Restore the terminator
+so registration cannot interpret adjacent read-only data as another entry.
+
+--- a/drivers/gpu/drm/i915/i915_perf.c
++++ b/drivers/gpu/drm/i915/i915_perf.c
+@@ -4835,6 +4835,8 @@ static const struct ctl_table oa_table[] = {
+ 	 .extra1 = SYSCTL_ZERO,
+ 	 .extra2 = &oa_sample_rate_hard_limit,
+ 	 },
++	/* DSM 5.10 register_sysctl() requires a NULL-terminated table. */
++	{ }
+ };
+ 
+ static u32 num_perf_groups_per_gt(struct intel_gt *gt)
