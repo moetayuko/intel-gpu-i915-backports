@@ -1,0 +1,44 @@
+Subject: i915: match mutable DSM 5.10 API parameters
+
+--- a/drivers/gpu/drm/i915/i915_perf.c
++++ b/drivers/gpu/drm/i915/i915_perf.c
+@@ -4814,7 +4814,7 @@
+ 	return ret;
+ }
+ 
+-static const struct ctl_table oa_table[] = {
++static struct ctl_table oa_table[] = {
+ 	{
+ 	 .procname = "perf_stream_paranoid",
+ 	 .data = &i915_perf_stream_paranoid,
+--- a/drivers/gpu/drm/i915/gt/uc/intel_guc_log.c
++++ b/drivers/gpu/drm/i915/gt/uc/intel_guc_log.c
+@@ -280,7 +280,7 @@
+ }
+ 
+ /* relay channel callbacks */
+-static const struct rchan_callbacks relay_callbacks = {
++static struct rchan_callbacks relay_callbacks = {
+ 	.subbuf_start = subbuf_start_callback,
+ 	.create_buf_file = create_buf_file_callback,
+ 	.remove_buf_file = remove_buf_file_callback,
+--- a/drivers/gpu/drm/i915/i915_hwmon.c
++++ b/drivers/gpu/drm/i915/i915_hwmon.c
+@@ -281,7 +281,7 @@
+ 	NULL
+ };
+ 
+-static const struct hwmon_channel_info * const hwm_info[] = {
++static const struct hwmon_channel_info *hwm_info[] = {
+ 	HWMON_CHANNEL_INFO(temp, HWMON_T_INPUT),
+ 	HWMON_CHANNEL_INFO(in, HWMON_I_INPUT),
+ 	HWMON_CHANNEL_INFO(power, HWMON_P_MAX | HWMON_P_RATED_MAX | HWMON_P_CRIT),
+@@ -291,7 +291,7 @@
+ 	NULL
+ };
+ 
+-static const struct hwmon_channel_info * const hwm_gt_info[] = {
++static const struct hwmon_channel_info *hwm_gt_info[] = {
+ 	HWMON_CHANNEL_INFO(energy, HWMON_E_INPUT),
+ 	NULL
+ };

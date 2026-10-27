@@ -33,3 +33,15 @@ config DMABUF_MOVE_NOTIFY
 config SYNC_FILE
 	bool
 	default y
+
+config HDMI_BACKPORT
+	tristate
+	default m if HDMI != y && HDMI != m
+
+config INTEL_GTT_BACKPORT
+	tristate
+	default m if INTEL_GTT != y && INTEL_GTT != m
+
+config DRM_MIPI_DSI_BACKPORT
+	tristate
+	default m if DRM_MIPI_DSI != y && DRM_MIPI_DSI != m

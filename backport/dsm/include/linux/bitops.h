@@ -5,6 +5,10 @@
 
 #include_next <linux/bitops.h>
 
+#ifndef BYTES_TO_BITS
+#define BYTES_TO_BITS(nb) ((nb) * BITS_PER_BYTE)
+#endif
+
 #ifndef for_each_clear_bitrange
 #define for_each_clear_bitrange(b, e, addr, size)		\
 	for ((b) = 0;						\

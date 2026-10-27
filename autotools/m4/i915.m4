@@ -5,6 +5,8 @@ AC_DEFUN([AC_I915_CONFIG], [
 		[],
 		[enable_linux_builtin=no])
 	AC_CONFIG_KERNEL
+	AC_RB_ADD_NOT_PRESENT
+	AC_RB_FIND_ADD_NOT_PRESENT
 	AS_IF([test ! -f "$srcdir/src/dsm/Kconfig"], [
 		AC_TTM_DEVICE_INIT_ALLOC_FLAGS_PRESENT
 		AC_TTM_BO_FINI_PRESENT

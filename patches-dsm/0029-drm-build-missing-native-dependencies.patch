@@ -1,0 +1,108 @@
+Subject: drm: build dependencies missing from DSM kernels
+
+--- a/drivers/gpu/drm/Kconfig
++++ b/drivers/gpu/drm/Kconfig
+@@ -7,15 +7,12 @@
+ #
+ menuconfig DRM
+ 	tristate "Direct Rendering Manager (XFree86 4.1.0 and higher DRI support)"
+-	depends on (AGP || AGP=n) && !EMULATED_CMPXCHG && HAS_DMA
++	depends on (AGP || !AGP) && !EMULATED_CMPXCHG && HAS_DMA
+ 	select DRM_PANEL_ORIENTATION_QUIRKS
+-	select HDMI
++	depends on HDMI || HDMI_BACKPORT
+ 	select I2C
+-	select DMA_SHARED_BUFFER
++	depends on DMA_SHARED_BUFFER || DMABUF_BACKPORT
+ 	select SYNC_FILE
+-# gallium uses SYS_kcmp for os_same_file_description() to de-duplicate
+-# device and dmabuf fd. Let's make sure that is available for our userspace.
+-	select KCMP
+ 	select VIDEO
+ 	help
+ 	  Kernel-level support for the Direct Rendering Infrastructure (DRI)
+@@ -37,10 +34,6 @@
+ 	tristate
+ 	depends on DRM
+ 	select DRM_KMS_HELPER
+-
+-config DRM_MIPI_DSI
+-	bool
+-	depends on DRM
+ 
+ config DRM_KMS_HELPER
+ 	tristate
+--- a/drivers/gpu/drm/i915/Kconfig
++++ b/drivers/gpu/drm/i915/Kconfig
+@@ -3,7 +3,7 @@
+ 	tristate "Intel 8xx/9xx/G3x/G4x/HD Graphics"
+ 	depends on DRM
+ 	depends on X86 && PCI
+-	select INTEL_GTT if X86
++	depends on INTEL_GTT || INTEL_GTT_BACKPORT
+ 	select INTERVAL_TREE
+ 	# we need shmfs for the swappable backing store, and in particular
+ 	# the shmem_readpage() which depends upon tmpfs
+@@ -17,7 +17,7 @@
+ 	select DRM_DISPLAY_HELPER
+ 	select DRM_KMS_HELPER
+ 	select DRM_PANEL
+-	select DRM_MIPI_DSI
++	depends on DRM_MIPI_DSI || DRM_MIPI_DSI_BACKPORT
+ 	select FB_IOMEM_HELPERS if DRM_FBDEV_EMULATION
+ 	select RELAY
+ 	select I2C
+@@ -31,11 +31,10 @@
+ 	select ACPI_WMI if ACPI
+ 	select ACPI_VIDEO if ACPI
+ 	select SYNC_FILE
+-	select IOSF_MBI if X86
+ 	select CRC32
+ 	select SND_HDA_I915 if SND_HDA_CORE
+ 	select CEC_CORE if CEC_NOTIFIER
+-	select VMAP_PFN
++	depends on VMAP_PFN || DRM_BACKPORT
+ 	select DRM_TTM
+ 	select DRM_BUDDY
+ 	select AUXILIARY_BUS
+--- a/drivers/gpu/drm/Makefile
++++ b/drivers/gpu/drm/Makefile
+@@ -164,3 +164,4 @@
+ obj-y += clients/ display/
+ obj-$(CONFIG_DRM_TTM) += ttm/
+ obj-$(CONFIG_DRM_I915) += i915/
++obj-$(CONFIG_DRM_MIPI_DSI_BACKPORT) += drm_mipi_dsi.o
+--- a/drivers/gpu/drm/drm_of.c
++++ b/drivers/gpu/drm/drm_of.c
+@@ -558,7 +558,7 @@
+ }
+ EXPORT_SYMBOL_GPL(drm_of_get_data_lanes_count_ep);
+ 
+-#if IS_ENABLED(CONFIG_DRM_MIPI_DSI)
++#if IS_ENABLED(CONFIG_DRM_MIPI_DSI) || IS_ENABLED(CONFIG_DRM_MIPI_DSI_BACKPORT)
+ 
+ /**
+  * drm_of_get_dsi_bus - find the DSI bus for a given device
+--- a/dsm/include/drm/drm_of.h
++++ b/dsm/include/drm/drm_of.h
+@@ -142,7 +142,7 @@
+ }
+ #endif
+ 
+-#if IS_ENABLED(CONFIG_OF) && IS_ENABLED(CONFIG_DRM_MIPI_DSI)
++#if IS_ENABLED(CONFIG_OF) && (IS_ENABLED(CONFIG_DRM_MIPI_DSI) || IS_ENABLED(CONFIG_DRM_MIPI_DSI_BACKPORT))
+ struct mipi_dsi_host *drm_of_get_dsi_bus(struct device *dev);
+ #else
+ static inline struct
+--- a/drivers/gpu/drm/clients/Kconfig
++++ b/drivers/gpu/drm/clients/Kconfig
+@@ -33,6 +33,9 @@
+ config DRM_FBDEV_EMULATION
+ 	bool "Enable legacy fbdev support for your modesetting driver"
+ 	depends on DRM_CLIENT_SELECTION
++	depends on FB_CFB_COPYAREA = y || FB_CFB_COPYAREA = m
++	depends on FB_CFB_FILLRECT = y || FB_CFB_FILLRECT = m
++	depends on FB_CFB_IMAGEBLIT = y || FB_CFB_IMAGEBLIT = m
+ 	select DRM_CLIENT
+ 	select DRM_CLIENT_SETUP
+ 	select FRAMEBUFFER_CONSOLE_DETECT_PRIMARY if FRAMEBUFFER_CONSOLE

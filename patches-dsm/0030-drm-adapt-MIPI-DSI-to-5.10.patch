@@ -1,0 +1,59 @@
+Subject: drm: adapt the MIPI DSI bus to DSM 5.10
+
+--- a/drivers/gpu/drm/drm_mipi_dsi.c
++++ b/drivers/gpu/drm/drm_mipi_dsi.c
+@@ -51,7 +51,7 @@
+  * subset of the MIPI DCS command set.
+  */
+ 
+-static int mipi_dsi_device_match(struct device *dev, const struct device_driver *drv)
++static int mipi_dsi_device_match(struct device *dev, struct device_driver *drv)
+ {
+ 	struct mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
+ 
+@@ -66,7 +66,7 @@
+ 	return 0;
+ }
+ 
+-static int mipi_dsi_uevent(const struct device *dev, struct kobj_uevent_env *env)
++static int mipi_dsi_uevent(struct device *dev, struct kobj_uevent_env *env)
+ {
+ 	const struct mipi_dsi_device *dsi = to_mipi_dsi_device(dev);
+ 	int err;
+@@ -92,7 +92,7 @@
+ 	.restore = pm_generic_restore,
+ };
+ 
+-const struct bus_type mipi_dsi_bus_type = {
++struct bus_type mipi_dsi_bus_type = {
+ 	.name = "mipi-dsi",
+ 	.match = mipi_dsi_device_match,
+ 	.uevent = mipi_dsi_uevent,
+@@ -165,7 +165,7 @@
+ 	int ret;
+ 	u32 reg;
+ 
+-	if (of_alias_from_compatible(node, info.type, sizeof(info.type)) < 0) {
++	if (of_modalias_node(node, info.type, sizeof(info.type)) < 0) {
+ 		dev_err(host->dev, "modalias failure on %pOF\n", node);
+ 		return ERR_PTR(-EINVAL);
+ 	}
+@@ -226,7 +226,8 @@
+ 		return dsi;
+ 	}
+ 
+-	device_set_node(&dsi->dev, of_fwnode_handle(info->node));
++	dsi->dev.fwnode = of_fwnode_handle(info->node);
++	dsi->dev.of_node = info->node;
+ 	dsi->channel = info->channel;
+ 	strscpy(dsi->name, info->type, sizeof(dsi->name));
+ 
+@@ -334,7 +335,7 @@
+ 
+ 	for_each_available_child_of_node(host->dev->of_node, node) {
+ 		/* skip nodes without reg property */
+-		if (!of_property_present(node, "reg"))
++		if (!of_find_property(node, "reg", NULL))
+ 			continue;
+ 		of_mipi_dsi_device_add(host, node);
+ 	}
