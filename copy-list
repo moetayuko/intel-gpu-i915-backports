@@ -181,3 +181,9 @@ include/uapi/drm/i915_drm.h
 @dsm include/uapi/linux/dma-buf.h -> dsm/include/uapi/linux/dma-buf.h
 @dsm include/uapi/linux/sync_file.h -> dsm/include/uapi/linux/sync_file.h
 @dsm include/trace/events/dma_fence.h -> dsm/include/trace/events/dma_fence.h
+
+@dsm drivers/video/hdmi.c -> dsm/hdmi.c
+@dsm include/linux/hdmi.h -> dsm/include/linux/hdmi-backport.h
+@dsm drivers/char/agp/intel-gtt.c -> dsm/intel-gtt.c
+@dsm drivers/char/agp/agp.h -> dsm/agp.h
+@dsm drivers/char/agp/intel-agp.h -> dsm/intel-agp.h
