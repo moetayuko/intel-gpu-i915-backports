@@ -7,7 +7,6 @@ backport-cc-disable-warning = $(call try-run,\
 NOSTDINC_FLAGS += \
 	-I$(M)/backport-include/ \
 	-I$(M)/include/ \
-	-I$(M)/include/drm \
 	-I$(M)/include/uapi \
 	-include $(M)/backport-include/backport/backport.h \
 	$(call backport-cc-disable-warning, unused-but-set-variable) \
@@ -27,7 +26,6 @@ export backport_srctree = $(BACKPORT_DIR)
 NOSTDINC_FLAGS += \
 	-I$(BACKPORT_DIR)/backport-include/ \
 	-I$(BACKPORT_DIR)/include/ \
-	-I$(BACKPORT_DIR)/include/drm \
 	-I$(BACKPORT_DIR)/include/uapi \
 	-include $(BACKPORT_DIR)/backport-include/backport/backport.h \
 	$(CFLAGS)
@@ -39,9 +37,6 @@ subdir-ccflags-y += $(call cc-option, -Wno-declaration-after-statement)
 subdir-ccflags-y += -std=gnu11
 
 obj-y += compat/
-
-# XE Drivers
-obj-$(CPTCFG_DRM_XE) += drivers/gpu/drm/xe/
 obj-$(CPTCFG_DRM_TTM)   += drivers/gpu/drm/ttm/
 obj-$(CPTCFG_DRM_SCHED) += drivers/gpu/drm/scheduler/
 drm_ttm_helper-y := drivers/gpu/drm/drm_gem_ttm_helper.o
