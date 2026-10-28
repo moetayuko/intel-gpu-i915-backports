@@ -149,6 +149,7 @@ jobs:
           ./configure --with-linux="$kernel"
           make -C src defconfig-dsm
           make -j"$(nproc)" modules
+          test -f src/drivers/gpu/drm/i915/i915.ko
           make -C "$kernel" M="$build/src" modules_install \
             INSTALL_MOD_PATH="$RUNNER_TEMP/dsm-install" \
             INSTALL_MOD_STRIP=1 \

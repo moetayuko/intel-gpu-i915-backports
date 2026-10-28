@@ -43,7 +43,7 @@ Subject: drm: build dependencies missing from DSM kernels
  	select INTERVAL_TREE
  	# we need shmfs for the swappable backing store, and in particular
  	# the shmem_readpage() which depends upon tmpfs
-@@ -17,7 +17,7 @@
+@@ -17,10 +17,10 @@
  	select DRM_DISPLAY_HELPER
  	select DRM_KMS_HELPER
  	select DRM_PANEL
@@ -52,6 +52,10 @@ Subject: drm: build dependencies missing from DSM kernels
  	select FB_IOMEM_HELPERS if DRM_FBDEV_EMULATION
  	select RELAY
  	select I2C
+-	select I2C_ALGOBIT
++	depends on I2C_ALGOBIT || I2C_ALGOBIT_BACKPORT
+ 	select IRQ_WORK
+ 	# i915 depends on ACPI_VIDEO when ACPI is enabled
 @@ -31,14 +31,13 @@
  	select ACPI_WMI if ACPI
  	select ACPI_VIDEO if ACPI

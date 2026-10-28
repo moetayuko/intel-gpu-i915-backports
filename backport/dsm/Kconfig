@@ -45,3 +45,7 @@ config INTEL_GTT_BACKPORT
 config DRM_MIPI_DSI_BACKPORT
 	tristate
 	default m if DRM_MIPI_DSI != y && DRM_MIPI_DSI != m
+
+config I2C_ALGOBIT_BACKPORT
+	tristate
+	default m if I2C_ALGOBIT != y && I2C_ALGOBIT != m

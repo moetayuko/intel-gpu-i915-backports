@@ -1,0 +1,18 @@
+Subject: i2c: algo-bit: adapt to native transfer callback names
+
+--- a/dsm/i2c-algo-bit.c
++++ b/dsm/i2c-algo-bit.c
+@@ -612,8 +612,13 @@
+ /* -----exported algorithm data: -------------------------------------	*/
+ 
+ const struct i2c_algorithm i2c_bit_algo = {
++#ifdef BPM_I2C_ALGORITHM_XFER_NOT_PRESENT
++	.master_xfer = bit_xfer,
++	.master_xfer_atomic = bit_xfer_atomic,
++#else
+ 	.xfer = bit_xfer,
+ 	.xfer_atomic = bit_xfer_atomic,
++#endif
+ 	.functionality = bit_func,
+ };
+ EXPORT_SYMBOL(i2c_bit_algo);
