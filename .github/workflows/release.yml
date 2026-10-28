@@ -1,0 +1,211 @@
+name: Release PVE DKMS and DSM modules
+
+on:
+  push:
+    tags: ["I915_*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  LINUX_TAG: lts-v6.18.56-linux-261015T032131Z
+  FIRMWARE_TAG: "20261019"
+
+jobs:
+  pve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          path: backports
+      - uses: actions/checkout@v7
+        with:
+          repository: intel/linux-intel-lts
+          ref: ${{ env.LINUX_TAG }}
+          path: linux
+      - name: Install packaging dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf automake flex bison \
+            debhelper dh-dkms dkms devscripts fakeroot coccinelle
+      - name: Generate PVE sources and build DKMS deb
+        env:
+          DEBFULLNAME: i915 backports
+          DEBEMAIL: noreply@github.com
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/I915_* ]]; then
+            tag_version="${GITHUB_REF#refs/tags/I915_}"
+            PACKAGE_VERSION="1.${tag_version%%_*}.${tag_version##*_}"
+          else
+            PACKAGE_VERSION="0~git${GITHUB_SHA:0:12}"
+          fi
+          for file in COPYING INSTALL; do
+            cp --remove-destination "$(automake --print-libdir)/$file" "backports/autotools/$file"
+          done
+          (cd backports && python3 gentree.py --profile=pve "$GITHUB_WORKSPACE/linux" "$RUNNER_TEMP/pve-build")
+          make -C "$RUNNER_TEMP/pve-build" -o clean i915-dkms-deb-pkg \
+            I915_DEB_PKG_VERSION="$PACKAGE_VERSION" I915_PKG_VERSION="$PACKAGE_VERSION"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-pve
+          path: ${{ runner.temp }}/intel-i915-dkms_*_all.deb
+          if-no-files-found: error
+
+  dsm:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          [
+            epyc7002,
+            epyc7003,
+            epyc7003ntb,
+            geminilakenk,
+            icelaked,
+            r1000nk,
+            v1000nk,
+          ]
+        dsm: ["7.1", "7.2", "7.3", "7.4"]
+        exclude:
+          - { platform: epyc7003, dsm: "7.1" }
+          - { platform: epyc7003, dsm: "7.2" }
+          - { platform: epyc7003, dsm: "7.3" }
+          - { platform: epyc7003ntb, dsm: "7.1" }
+          - { platform: epyc7003ntb, dsm: "7.2" }
+          - { platform: epyc7003ntb, dsm: "7.3" }
+          - { platform: geminilakenk, dsm: "7.1" }
+          - { platform: icelaked, dsm: "7.1" }
+          - { platform: icelaked, dsm: "7.2" }
+          - { platform: icelaked, dsm: "7.3" }
+          - { platform: r1000nk, dsm: "7.1" }
+          - { platform: v1000nk, dsm: "7.1" }
+    name: DSM ${{ matrix.platform }} ${{ matrix.dsm }}
+    env:
+      PLATFORM: ${{ matrix.platform }}
+      DSM_VERSION: ${{ matrix.dsm }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          path: backports
+      - uses: actions/checkout@v7
+        with:
+          repository: intel/linux-intel-lts
+          ref: ${{ env.LINUX_TAG }}
+          path: linux
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf automake flex bison \
+            libelf-dev libssl-dev bc kmod xz-utils coccinelle
+      - uses: actions/cache@v6
+        id: sdk
+        with:
+          path: ${{ runner.temp }}/synology-sdk-archives
+          key: synology-sdk-archives-${{ matrix.platform }}-${{ matrix.dsm }}-v1
+      - name: Download Synology headers and toolchain
+        if: steps.sdk.outputs.cache-hit != 'true'
+        run: |
+          archives="$RUNNER_TEMP/synology-sdk-archives"
+          mkdir -p "$archives"
+          url="https://global.synologydownload.com/download/ToolChain/toolkit/$DSM_VERSION/$PLATFORM/ds.$PLATFORM-$DSM_VERSION"
+          curl -fL --retry 5 --retry-all-errors "$url.dev.txz" -o "$archives/dev.txz"
+          curl -fL --retry 5 --retry-all-errors "$url.env.txz" -o "$archives/env.txz"
+      - name: Extract Synology headers and toolchain
+        run: |
+          sdk="$RUNNER_TEMP/synology-sdk"
+          archives="$RUNNER_TEMP/synology-sdk-archives"
+          prefix=usr/local/x86_64-pc-linux-gnu
+          mkdir -p "$sdk/dev" "$sdk/env"
+          tar -xJf "$archives/dev.txz" -C "$sdk/dev" \
+            "$prefix/x86_64-pc-linux-gnu/sys-root/usr/lib/modules"
+          tar -xJf "$archives/env.txz" -C "$sdk/env" "$prefix"
+      - name: Compile DSM module stack
+        run: |
+          sdk="$RUNNER_TEMP/synology-sdk"
+          prefix=usr/local/x86_64-pc-linux-gnu
+          kernel="$sdk/dev/$prefix/x86_64-pc-linux-gnu/sys-root/usr/lib/modules/DSM-$DSM_VERSION/build"
+          toolchain="$sdk/env/$prefix/bin"
+          export CROSS_COMPILE="$toolchain/x86_64-pc-linux-gnu-"
+          export KLIB_BUILD="$kernel"
+          # DSM 7.1 binutils 2.30 rejects compressed debug sections after
+          # objtool/libelf changes their section alignment. Disable debug info
+          # to avoid this incompatibility with the SDK linker.
+          export KCFLAGS=-g0
+          for file in COPYING INSTALL; do
+            cp --remove-destination "$(automake --print-libdir)/$file" "backports/autotools/$file"
+          done
+          build="$RUNNER_TEMP/dsm-build"
+          (cd backports && python3 gentree.py --profile=dsm "$GITHUB_WORKSPACE/linux" "$build")
+          cd "$build"
+          autoreconf -fi
+          ./configure --with-linux="$kernel"
+          make -C src defconfig-dsm
+          make -j"$(nproc)" modules
+          make -C "$kernel" M="$build/src" modules_install \
+            INSTALL_MOD_PATH="$RUNNER_TEMP/dsm-install" \
+            INSTALL_MOD_STRIP=1 \
+            CONFIG_MODULE_SIG_ALL= DEPMOD=true
+      - uses: actions/cache@v6
+        id: firmware
+        with:
+          path: ${{ runner.temp }}/linux-firmware
+          key: linux-firmware-gitlab-${{ env.FIRMWARE_TAG }}-i915-v1
+      - name: Download i915 firmware
+        if: steps.firmware.outputs.cache-hit != 'true'
+        run: |
+          firmware_src="$RUNNER_TEMP/linux-firmware"
+          git clone --depth=1 --filter=blob:none --sparse --branch "$FIRMWARE_TAG" \
+            https://gitlab.com/kernel-firmware/linux-firmware.git "$firmware_src"
+          git -C "$firmware_src" sparse-checkout set i915
+      - name: Package modules and firmware
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/I915_* ]]; then
+            tag_version="${GITHUB_REF#refs/tags/I915_}"
+            PACKAGE_VERSION="1.${tag_version%%_*}.${tag_version##*_}"
+          else
+            PACKAGE_VERSION="0~git${GITHUB_SHA:0:12}"
+          fi
+          mkdir -p package/modules package/firmware dist
+          find "$RUNNER_TEMP/dsm-install" -type f -name '*.ko' -exec cp -t package/modules {} +
+          for module in package/modules/*.ko; do
+            modinfo -F firmware "$module"
+          done | sort -u > "$RUNNER_TEMP/firmware.list"
+          firmware_src="$RUNNER_TEMP/linux-firmware"
+          while IFS= read -r firmware; do
+            [[ -n "$firmware" ]] || continue
+            cp -L "$firmware_src/$firmware" "package/firmware/${firmware##*/}"
+          done < "$RUNNER_TEMP/firmware.list"
+          tar -czf "dist/i915-dsm-$PLATFORM-$DSM_VERSION-$PACKAGE_VERSION.tar.gz" -C package modules firmware
+      - uses: actions/upload-artifact@v7
+        with:
+          name: release-dsm-${{ matrix.platform }}-${{ matrix.dsm }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+
+  release:
+    needs: [pve, dsm]
+    if: startsWith(github.ref, 'refs/tags/I915_')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v3
+        with:
+          name: ${{ github.ref_name }}
+          body: PVE DKMS source deb and DSM kernel 5.10 modules with i915 firmware.
+          files: dist/*
+          fail_on_unmatched_files: true
