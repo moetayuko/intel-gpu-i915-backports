@@ -9,7 +9,7 @@ AC_DEFUN([AC_KERNEL_SINGLE_TARGET_CFLAGS], [
 
 		CFLAGS=$(echo $_conftest_cmd | \
 			 cut -d ' ' -f 4- | \
-			 sed -e "s|\./|${LINUX_OBJ}/|g" \
+			 sed -e "s#\(^\| \)\(-I\)\?\./#\1\2${LINUX_OBJ}/#g" \
 			     -e "s|-I\([[[a-z]]]*\)|-I${LINUX_OBJ}/\1|g" \
 			     -e "s|-include \([[[a-z]]]*\)|-include ${LINUX_OBJ}/\1|g" \
 			     -e "s|$PWD|\${PWD}|g")
