@@ -5,6 +5,7 @@
 
 #include_next <linux/list_sort.h>
 
+#ifdef BPM_LIST_SORT_CMP_CONST_NOT_PRESENT
 struct backport_sort_ctx {
 	void *priv;
 	int (*cmp)(void *, const struct list_head *, const struct list_head *);
@@ -26,5 +27,6 @@ static inline void backport_list_sort(void *priv, struct list_head *head,
 }
 
 #define list_sort backport_list_sort
+#endif
 
 #endif

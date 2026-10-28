@@ -2,9 +2,9 @@ config DRM_BACKPORT
 	bool
 	default y
 
-config AUXILIARY_BUS
+config AUXILIARY_BUS_BACKPORT
 	tristate
-	default m
+	default m if AUXILIARY_BUS != y && AUXILIARY_BUS != m
 
 config GPU_BUDDY
 	tristate

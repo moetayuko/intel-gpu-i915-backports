@@ -52,7 +52,7 @@ Subject: drm: build dependencies missing from DSM kernels
  	select FB_IOMEM_HELPERS if DRM_FBDEV_EMULATION
  	select RELAY
  	select I2C
-@@ -31,11 +31,10 @@
+@@ -31,14 +31,13 @@
  	select ACPI_WMI if ACPI
  	select ACPI_VIDEO if ACPI
  	select SYNC_FILE
@@ -64,7 +64,11 @@ Subject: drm: build dependencies missing from DSM kernels
 +	depends on VMAP_PFN || DRM_BACKPORT
  	select DRM_TTM
  	select DRM_BUDDY
- 	select AUXILIARY_BUS
+-	select AUXILIARY_BUS
++	depends on AUXILIARY_BUS || AUXILIARY_BUS_BACKPORT
+ 	help
+ 	  Choose this option if you have a system that has "Intel Graphics
+ 	  Media Accelerator" or "HD Graphics" integrated graphics,
 --- a/drivers/gpu/drm/Makefile
 +++ b/drivers/gpu/drm/Makefile
 @@ -164,3 +164,4 @@

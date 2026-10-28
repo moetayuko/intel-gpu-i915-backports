@@ -148,7 +148,7 @@ include/uapi/drm/i915_drm.h
 @dsm include/linux/gpu_buddy.h -> dsm/include/linux/gpu_buddy.h
 @dsm drivers/gpu/buddy.c -> dsm/gpu_buddy.c
 @dsm drivers/base/auxiliary.c -> dsm/auxiliary.c
-@dsm include/linux/auxiliary_bus.h -> dsm/include/linux/auxiliary_bus.h
+@dsm include/linux/auxiliary_bus.h -> dsm/include/linux/auxiliary_bus-backport.h
 @dsm include/linux/iosys-map.h -> dsm/include/linux/iosys-map.h
 @dsm include/linux/cleanup.h -> dsm/include/linux/cleanup.h
 @dsm include/kunit/test-bug.h -> dsm/include/kunit/test-bug.h
